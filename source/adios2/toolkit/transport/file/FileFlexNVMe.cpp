@@ -9,8 +9,6 @@
  */
 #include "FileFlexNVMe.h"
 #include "adios2/helper/adiosLog.h"
-#include <iostream>
-#include <string>
 
 #ifdef ADIOS2_HAVE_O_DIRECT
 #ifndef _GNU_SOURCE
