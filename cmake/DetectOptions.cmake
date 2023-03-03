@@ -452,6 +452,14 @@ if(ADIOS2_USE_BP5 AND NOT WIN32)
   set(ADIOS2_HAVE_BP5 TRUE)
 endif()
 
+# flan
+if(ADIOS2_USE_FLAN AND UNIX)
+	find_package(flan)
+	if(FLAN_FOUND)
+		set(ADIOS2_HAVE_FLAN TRUE)
+	endif()
+endif()
+
 #SysV IPC
 if(UNIX)
   include(CheckSymbolExists)
