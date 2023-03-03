@@ -2,12 +2,12 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * FileDescriptor.cpp file I/O using FlexNVME I/O library
+ * FileDescriptor.cpp file I/O using FlexNVMe I/O library
  *
  *  Created on: Oct 6, 2016
  *      Author: William F Godoy godoywf@ornl.gov
  */
-#include "FileFlexNVME.h"
+#include "FileFlexNVMe.h"
 #include "adios2/helper/adiosLog.h"
 
 #ifdef ADIOS2_HAVE_O_DIRECT
@@ -33,50 +33,50 @@ namespace adios2
 namespace transport
 {
 
-FileFlexNVME::FileFlexNVME(helper::Comm const &comm)
-: Transport("File", "FlexNVME", comm)
+FileFlexNVMe::FileFlexNVME(helper::Comm const &comm)
+: Transport("File", "FlexNVMe", comm)
 {
 }
 
-FileFlexNVME::~FileFlexNVME() {}
+FileFlexNVMe::~FileFlexNVME() {}
 
-void FileFlexNVME::WaitForOpen() {}
+void FileFlexNVMe::WaitForOpen() {}
 
-void FileFlexNVME::Open(const std::string &name, const Mode openMode,
+void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
                         const bool async, const bool directio)
 {
 }
 
-void FileFlexNVME::OpenChain(const std::string &name, Mode openMode,
+void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
                              const helper::Comm &chainComm, const bool async,
                              const bool directio)
 {
 }
 
-void FileFlexNVME::Write(const char *buffer, size_t size, size_t start) {}
+void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start) {}
 
 #ifdef REALLY_WANT_WRITEV
-void FileFlexNVME::WriteV(const core::iovec *iov, const int iovcnt,
+void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
                           size_t start)
 {
 }
 #endif
 
-void FileFlexNVME::Read(char *buffer, size_t size, size_t start) {}
+void FileFlexNVMe::Read(char *buffer, size_t size, size_t start) {}
 
-size_t FileFlexNVME::GetSize() {}
+size_t FileFlexNVMe::GetSize() {}
 
-void FileFlexNVME::Flush() {}
+void FileFlexNVMe::Flush() {}
 
-void FileFlexNVME::Close() {}
+void FileFlexNVMe::Close() {}
 
-void FileFlexNVME::Delete() {}
+void FileFlexNVMe::Delete() {}
 
-void FileFlexNVME::Seek(const size_t start) {}
+void FileFlexNVMe::Seek(const size_t start) {}
 
-void FileFlexNVME::Truncate(const size_t length) {}
+void FileFlexNVMe::Truncate(const size_t length) {}
 
-void FileFlexNVME::MkDir(const std::string &fileName) {}
+void FileFlexNVMe::MkDir(const std::string &fileName) {}
 
 } // end namespace transport
 } // end namespace adios2
