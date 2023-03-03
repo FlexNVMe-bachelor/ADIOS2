@@ -40,3 +40,6 @@ docs/pyvenv.cfg
 # Visual Studio
 .vs/
 CMakeSettings.json
+
+.cache
+compile_commands.json
