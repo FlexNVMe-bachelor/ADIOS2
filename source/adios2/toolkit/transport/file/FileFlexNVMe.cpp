@@ -92,6 +92,10 @@ void FileFlexNVMe::Close() {}
 
 void FileFlexNVMe::Delete() {}
 
+void FileFlexNVMe::SeekToEnd() {}
+
+void FileFlexNVMe::SeekToBegin() {}
+
 void FileFlexNVMe::Seek(const size_t start) {}
 
 void FileFlexNVMe::Truncate(const size_t length) {}
