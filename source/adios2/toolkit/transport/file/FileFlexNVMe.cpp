@@ -2,12 +2,12 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * FileDescriptor.cpp file I/O using FlexNVME I/O library
+ * FileDescriptor.cpp file I/O using FlexNVMe I/O library
  *
  *  Created on: Oct 6, 2016
  *      Author: William F Godoy godoywf@ornl.gov
  */
-#include "FileFlexNVME.h"
+#include "FileFlexNVMe.h"
 #include "adios2/helper/adiosLog.h"
 
 #ifdef ADIOS2_HAVE_O_DIRECT
@@ -33,12 +33,12 @@ namespace adios2
 namespace transport
 {
 
-FileFlexNVME::FileFlexNVME(helper::Comm const &comm)
-: Transport("File", "FlexNVME", comm)
+FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
+: Transport("File", "FlexNVMe", comm)
 {
 }
 
-FileFlexNVME::~FileFlexNVME()
+FileFlexNVMe::~FileFlexNVMe()
 {
     if (m_IsOpen)
     {
@@ -46,7 +46,7 @@ FileFlexNVME::~FileFlexNVME()
     }
 }
 
-void FileFlexNVME::WaitForOpen()
+void FileFlexNVMe::WaitForOpen()
 {
     if (m_IsOpening)
     {
@@ -56,7 +56,7 @@ void FileFlexNVME::WaitForOpen()
         }
         m_IsOpening = false;
         CheckFile("couldn't open file " + m_Name +
-                  ", in call to FlexNVME open");
+                  ", in call to FlexNVMe open");
         m_IsOpen = true;
     }
 }
@@ -75,7 +75,7 @@ static int __GetOpenFlag(const int flag, const bool directio)
     }
 }
 
-void FileFlexNVME::Open(const std::string &name, const Mode openMode,
+void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
                         const bool async, const bool directio)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name,
@@ -135,18 +135,18 @@ void FileFlexNVME::Open(const std::string &name, const Mode openMode,
 
     default:
         CheckFile("unknown open mode for file " + m_Name +
-                  ", in call to FlexNVME open");
+                  ", in call to FlexNVMe open");
     }
 
     if (!m_IsOpening)
     {
         CheckFile("couldn't open file " + m_Name +
-                  ", in call to FlexNVME open");
+                  ", in call to FlexNVMe open");
         m_IsOpen = true;
     }
 }
 
-void FileFlexNVME::OpenChain(const std::string &name, Mode openMode,
+void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
                              const helper::Comm &chainComm, const bool async,
                              const bool directio)
 {
@@ -168,7 +168,7 @@ void FileFlexNVME::OpenChain(const std::string &name, Mode openMode,
     if (chainComm.Rank() > 0)
     {
         chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
-                       "Chain token in FileFlexNVME::OpenChain");
+                       "Chain token in FileFlexNVMe::OpenChain");
     }
 
     m_DirectIO = directio;
@@ -236,24 +236,24 @@ void FileFlexNVME::OpenChain(const std::string &name, Mode openMode,
 
     default:
         CheckFile("unknown open mode for file " + m_Name +
-                  ", in call to FlexNVME open");
+                  ", in call to FlexNVMe open");
     }
 
     if (!m_IsOpening)
     {
         CheckFile("couldn't open file " + m_Name +
-                  ", in call to FlexNVME open");
+                  ", in call to FlexNVMe open");
         m_IsOpen = true;
     }
 
     if (chainComm.Rank() < chainComm.Size() - 1)
     {
         chainComm.Isend(&token, 1, chainComm.Rank() + 1, 0,
-                        "Sending Chain token in FileFlexNVME::OpenChain");
+                        "Sending Chain token in FileFlexNVMe::OpenChain");
     }
 }
 
-void FileFlexNVME::Write(const char *buffer, size_t size, size_t start)
+void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 {
     auto lf_Write = [&](const char *buffer, size_t size) {
         while (size > 0)
@@ -272,7 +272,7 @@ void FileFlexNVME::Write(const char *buffer, size_t size, size_t start)
                 }
 
                 helper::Throw<std::ios_base::failure>(
-                    "Toolkit", "transport::file::FileFlexNVME", "Write",
+                    "Toolkit", "transport::file::FileFlexNVMe", "Write",
                     "couldn't write to file " + m_Name + " " + SysErrMsg());
             }
 
@@ -291,7 +291,7 @@ void FileFlexNVME::Write(const char *buffer, size_t size, size_t start)
         if (static_cast<size_t>(newPosition) != start)
         {
             helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileFlexNVME", "Write",
+                "Toolkit", "transport::file::FileFlexNVMe", "Write",
                 "couldn't move to start position " + std::to_string(start) +
                     " in file " + m_Name + " " + SysErrMsg());
         }
@@ -322,7 +322,7 @@ void FileFlexNVME::Write(const char *buffer, size_t size, size_t start)
 }
 
 #ifdef REALLY_WANT_WRITEV
-void FileFlexNVME::WriteV(const core::iovec *iov, const int iovcnt,
+void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
                           size_t start)
 {
     auto lf_Write = [&](const core::iovec *iov, const int iovcnt) {
@@ -344,7 +344,7 @@ void FileFlexNVME::WriteV(const core::iovec *iov, const int iovcnt,
             if (errno != EINTR)
             {
                 helper::Throw<std::ios_base::failure>(
-                    "Toolkit", "transport::file::FileFlexNVME", "WriteV",
+                    "Toolkit", "transport::file::FileFlexNVMe", "WriteV",
                     "couldn't write to file " + m_Name + " " + SysErrMsg());
             }
             written = 0;
@@ -396,7 +396,7 @@ void FileFlexNVME::WriteV(const core::iovec *iov, const int iovcnt,
         if (static_cast<size_t>(newPosition) != start)
         {
             helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileFlexNVME", "WriteV",
+                "Toolkit", "transport::file::FileFlexNVMe", "WriteV",
                 "couldn't move to start position " + std::to_string(start) +
                     " in file " + m_Name + " " + SysErrMsg());
         }
@@ -416,7 +416,7 @@ void FileFlexNVME::WriteV(const core::iovec *iov, const int iovcnt,
 }
 #endif
 
-void FileFlexNVME::Read(char *buffer, size_t size, size_t start)
+void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
 {
     auto lf_Read = [&](char *buffer, size_t size) {
         while (size > 0)
@@ -435,7 +435,7 @@ void FileFlexNVME::Read(char *buffer, size_t size, size_t start)
                 }
 
                 helper::Throw<std::ios_base::failure>(
-                    "Toolkit", "transport::file::FileFlexNVME", "Read",
+                    "Toolkit", "transport::file::FileFlexNVMe", "Read",
                     "couldn't read from file " + m_Name + " " + SysErrMsg());
             }
 
@@ -455,7 +455,7 @@ void FileFlexNVME::Read(char *buffer, size_t size, size_t start)
         if (static_cast<size_t>(newPosition) != start)
         {
             helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileFlexNVME", "Read",
+                "Toolkit", "transport::file::FileFlexNVMe", "Read",
                 "couldn't move to start position " + std::to_string(start) +
                     " in file " + m_Name + " " + SysErrMsg());
         }
@@ -480,7 +480,7 @@ void FileFlexNVME::Read(char *buffer, size_t size, size_t start)
     }
 }
 
-size_t FileFlexNVME::GetSize()
+size_t FileFlexNVMe::GetSize()
 {
     struct stat fileStat;
     WaitForOpen();
@@ -489,19 +489,19 @@ size_t FileFlexNVME::GetSize()
     {
         m_Errno = errno;
         helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVME", "GetSize",
+            "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
             "couldn't get size of file " + m_Name + SysErrMsg());
     }
     m_Errno = errno;
     return static_cast<size_t>(fileStat.st_size);
 }
 
-void FileFlexNVME::Flush()
+void FileFlexNVMe::Flush()
 {
     /* Turn this off now because BP3/BP4 calls manager Flush and this syncing
      * slows down IO performance */
 #if 0
-#if (_FlexNVME_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
+#if (_FlexNVMe_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
     fdatasync(m_FileDescriptor);
 #else
     fsync(m_FileDescriptor)
@@ -509,7 +509,7 @@ void FileFlexNVME::Flush()
 #endif
 }
 
-void FileFlexNVME::Close()
+void FileFlexNVMe::Close()
 {
     WaitForOpen();
     ProfilerStart("close");
@@ -521,14 +521,14 @@ void FileFlexNVME::Close()
     if (status == -1)
     {
         helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVME", "Close",
+            "Toolkit", "transport::file::FileFlexNVMe", "Close",
             "couldn't close file " + m_Name + " " + SysErrMsg());
     }
 
     m_IsOpen = false;
 }
 
-void FileFlexNVME::Delete()
+void FileFlexNVMe::Delete()
 {
     WaitForOpen();
     if (m_IsOpen)
@@ -538,23 +538,23 @@ void FileFlexNVME::Delete()
     std::remove(m_Name.c_str());
 }
 
-void FileFlexNVME::CheckFile(const std::string hint) const
+void FileFlexNVMe::CheckFile(const std::string hint) const
 {
     if (m_FileDescriptor == -1)
     {
         helper::Throw<std::ios_base::failure>("Toolkit",
-                                              "transport::file::FileFlexNVME",
+                                              "transport::file::FileFlexNVMe",
                                               "CheckFile", hint + SysErrMsg());
     }
 }
 
-std::string FileFlexNVME::SysErrMsg() const
+std::string FileFlexNVMe::SysErrMsg() const
 {
     return std::string(": errno = " + std::to_string(m_Errno) + ": " +
                        strerror(m_Errno));
 }
 
-void FileFlexNVME::SeekToEnd()
+void FileFlexNVMe::SeekToEnd()
 {
     WaitForOpen();
     errno = 0;
@@ -563,12 +563,12 @@ void FileFlexNVME::SeekToEnd()
     if (status == -1)
     {
         helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVME", "SeekToEnd",
+            "Toolkit", "transport::file::FileFlexNVMe", "SeekToEnd",
             "couldn't seek to the end of file " + m_Name + " " + SysErrMsg());
     }
 }
 
-void FileFlexNVME::SeekToBegin()
+void FileFlexNVMe::SeekToBegin()
 {
     WaitForOpen();
     errno = 0;
@@ -577,12 +577,12 @@ void FileFlexNVME::SeekToBegin()
     if (status == -1)
     {
         helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVME", "SeekToBegin",
+            "Toolkit", "transport::file::FileFlexNVMe", "SeekToBegin",
             "couldn't seek to the begin of file " + m_Name + " " + SysErrMsg());
     }
 }
 
-void FileFlexNVME::Seek(const size_t start)
+void FileFlexNVMe::Seek(const size_t start)
 {
     if (start != MaxSizeT)
     {
@@ -593,7 +593,7 @@ void FileFlexNVME::Seek(const size_t start)
         if (status == -1)
         {
             helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileFlexNVME", "Seek",
+                "Toolkit", "transport::file::FileFlexNVMe", "Seek",
                 "couldn't seek to offset " + std::to_string(start) +
                     " of file " + m_Name + " " + SysErrMsg());
         }
@@ -604,7 +604,7 @@ void FileFlexNVME::Seek(const size_t start)
     }
 }
 
-void FileFlexNVME::Truncate(const size_t length)
+void FileFlexNVMe::Truncate(const size_t length)
 {
     WaitForOpen();
     errno = 0;
@@ -613,13 +613,13 @@ void FileFlexNVME::Truncate(const size_t length)
     if (status == -1)
     {
         helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVME", "Truncate",
+            "Toolkit", "transport::file::FileFlexNVMe", "Truncate",
             "couldn't truncate to " + std::to_string(length) +
                 " bytes of file " + m_Name + " " + SysErrMsg());
     }
 }
 
-void FileFlexNVME::MkDir(const std::string &fileName) {}
+void FileFlexNVMe::MkDir(const std::string &fileName) {}
 
 } // end namespace transport
 } // end namespace adios2
