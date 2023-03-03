@@ -39,12 +39,12 @@ FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
 {
 }
 
-FileFlexNVME::~FileFlexNVME() noexcept { Close(); }
+FileFlexNVMe::~FileFlexNVMe() noexcept { Close(); }
 
 // TODO(adbo): s:
 //  - Async open/close?
 void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
-                        const bool /*async*/, const bool /*directio*/)
+                        const bool  /*async*/, const bool  /*directio*/)
 {
     m_Name = name;
     m_OpenMode = openMode;
@@ -89,7 +89,7 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
     ProfilerStop("open");
 }
 
-auto FileFlexNVME::ErrnoErrMsg() const -> std::string
+auto FileFlexNVMe::ErrnoErrMsg() const -> std::string
 {
     return std::string(": errno = " + std::to_string(errno) + ": " +
                        strerror(errno));
@@ -101,7 +101,7 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
 {
 }
 
-void FileFlexNVME::Write(const char *buffer, size_t size, size_t start) {}
+void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start) {}
 
 #ifdef REALLY_WANT_WRITEV
 void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
@@ -110,13 +110,13 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 }
 #endif
 
-void FileFlexNVME::Read(char *buffer, size_t size, size_t start) {}
+void FileFlexNVMe::Read(char *buffer, size_t size, size_t start) {}
 
-size_t FileFlexNVME::GetSize() {}
+size_t FileFlexNVMe::GetSize() {}
 
-void FileFlexNVME::Flush() {}
+void FileFlexNVMe::Flush() {}
 
-void FileFlexNVME::Close()
+void FileFlexNVMe::Close()
 {
     if (m_IsOpen)
     {
@@ -125,11 +125,11 @@ void FileFlexNVME::Close()
     }
 }
 
-void FileFlexNVME::Delete() {}
+void FileFlexNVMe::Delete() {}
 
-void FileFlexNVME::Seek(const size_t start) {}
+void FileFlexNVMe::Seek(const size_t start) {}
 
-void FileFlexNVME::Truncate(const size_t length) {}
+void FileFlexNVMe::Truncate(const size_t length) {}
 
 void FileFlexNVMe::MkDir(const std::string &fileName) {}
 
