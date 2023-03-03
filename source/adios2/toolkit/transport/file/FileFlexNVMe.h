@@ -75,7 +75,7 @@ public:
 private:
     size_t m_chunkWrites = 0;
     size_t m_chunkSize = 0;
-    std::string m_baseName;
+    std::string m_baseName = "";
 };
 
 } // end namespace transport
