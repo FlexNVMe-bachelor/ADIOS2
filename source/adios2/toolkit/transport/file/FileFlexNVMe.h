@@ -28,13 +28,13 @@ namespace transport
 {
 
 /** File descriptor transport using the xNVME IO library */
-class FileFlexNVME : public Transport
+class FileFlexNVMe : public Transport
 {
 
 public:
-    explicit FileFlexNVME(helper::Comm const &comm);
+    explicit FileFlexNVMe(helper::Comm const &comm);
 
-    ~FileFlexNVME() noexcept;
+    ~FileFlexNVMe() noexcept;
 
     void Open(const std::string &name, const Mode openMode,
               const bool async = false, const bool directio = false) final;
