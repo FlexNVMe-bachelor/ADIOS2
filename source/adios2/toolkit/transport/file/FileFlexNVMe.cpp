@@ -9,6 +9,7 @@
  */
 #include "FileFlexNVMe.h"
 #include "adios2/helper/adiosLog.h"
+#include <iostream>
 
 #ifdef ADIOS2_HAVE_O_DIRECT
 #ifndef _GNU_SOURCE
@@ -50,6 +51,7 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
                              const helper::Comm &chainComm, const bool async,
                              const bool directio)
 {
+    m_baseName = name;
 }
 
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
@@ -104,6 +106,13 @@ void FileFlexNVMe::MkDir(const std::string &fileName) {}
 
 std::string FileFlexNVMe::CreateChunkName()
 {
+    if (m_baseName == "")
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "CreateChunkName",
+            "Empty filenames are not supported");
+    }
+
     std::string base = m_baseName;
     base += "#" + std::to_string(m_chunkWrites);
     m_chunkWrites += 1;
