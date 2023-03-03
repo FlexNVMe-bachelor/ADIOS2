@@ -16,6 +16,8 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
 
+#include <flan.h>
+
 namespace adios2
 {
 namespace helper
@@ -30,9 +32,9 @@ class FileFlexNVME : public Transport
 {
 
 public:
-    FileFlexNVME(helper::Comm const &comm);
+    explicit FileFlexNVME(helper::Comm const &comm);
 
-    ~FileFlexNVME();
+    ~FileFlexNVME() noexcept;
 
     void Open(const std::string &name, const Mode openMode,
               const bool async = false, const bool directio = false) final;
@@ -67,20 +69,10 @@ public:
     void MkDir(const std::string &fileName) final;
 
 private:
-    /** xNVME file handle returned by Open */
-    int m_FileDescriptor = -1;
-    int m_Errno = 0;
-    bool m_IsOpening = false;
-    std::future<int> m_OpenFuture;
-    bool m_DirectIO = false;
+    std::string pool_name;
+    struct flan_handle *flanh = nullptr;
 
-    /**
-     * Check if m_FileDescriptor is -1 after an operation
-     * @param hint exception message
-     */
-    void CheckFile(const std::string hint) const;
-    void WaitForOpen();
-    std::string SysErrMsg() const;
+    auto ErrnoErrMsg() const -> std::string;
 };
 
 } // end namespace transport
