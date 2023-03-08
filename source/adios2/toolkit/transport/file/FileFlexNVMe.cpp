@@ -64,13 +64,14 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
     }
     else if (m_chunkSize > size)
     {
-        std::cerr
-            << "Warning: Dynamic chunk sizes are not supported by "
-               "FlexNVMe. It will be saved, but will be space inefficient\n";
+        helper::Log("Toolkit", "transport::file::FileFlexNVMe", "Write",
+                    "Dynamic chunk sizes are not supported by FlexNVMe. It "
+                    "will be saved, but will be space inefficient",
+                    helper::WARNING);
     }
     else if (m_chunkSize < size)
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "Write",
             "Chunksize cannot be bigger than the first chunk written");
     }
