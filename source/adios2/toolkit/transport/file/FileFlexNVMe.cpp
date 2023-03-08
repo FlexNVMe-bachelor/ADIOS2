@@ -8,7 +8,10 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "FileFlexNVMe.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosString.h"
+#include <stdexcept>
 
 #ifdef ADIOS2_HAVE_O_DIRECT
 #ifndef _GNU_SOURCE
@@ -39,6 +42,18 @@ FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
 }
 
 FileFlexNVMe::~FileFlexNVMe() {}
+
+void FileFlexNVMe::SetParameters(const Params &params)
+{
+    helper::SetParameterValue("device_url", params, m_DeviceUrl);
+    std::cout << "Parameter value: " << m_DeviceUrl << "\n";
+    if (m_DeviceUrl.empty())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
+            "device_url paramater has not been set");
+    }
+}
 
 void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
                         const bool async, const bool directio)
