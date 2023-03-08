@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEDESCRIPTOR_H_
-#define ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEDESCRIPTOR_H_
+#ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FLEXNVME_H_
+#define ADIOS2_TOOLKIT_TRANSPORT_FILE_FLEXNVME_H_
 
 #include <future> //std::async, std::future
 
@@ -86,4 +86,4 @@ private:
 } // end namespace transport
 } // end namespace adios2
 
-#endif /* ADIOS2_TRANSPORT_FILE_FILEDESCRIPTOR_H_ */
+#endif /* ADIOS2_TOOLKIT_TRANSPORT_FILE_FLEXNVME_H_ */
