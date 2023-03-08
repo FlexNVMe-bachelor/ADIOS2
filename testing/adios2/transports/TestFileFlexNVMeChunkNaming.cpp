@@ -3,15 +3,16 @@
 #include "adios2/toolkit/transport/file/FileFlexNVMe.h"
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <tuple>
 
-class ChunkNameTest
+class ChunkNameSuite
 : public ::testing::TestWithParam<
       std::tuple<std::string, std::string, std::string, std::string>>
 {
 };
 
-TEST_P(ChunkNameTest, Names)
+TEST_P(ChunkNameSuite, CreateChunkNameTest)
 {
     const std::string &baseName = std::get<0>(GetParam());
     const std::string &first = std::get<1>(GetParam());
@@ -20,13 +21,13 @@ TEST_P(ChunkNameTest, Names)
 
     adios2::transport::FileFlexNVMe e(adios2::helper::CommDummy());
     e.Open(baseName, adios2::Mode::Undefined);
-    ASSERT_EQ(first, e.CreateChunkName());
-    ASSERT_EQ(second, e.CreateChunkName());
-    ASSERT_EQ(third, e.CreateChunkName());
+    ASSERT_EQ(e.CreateChunkName(), first);
+    ASSERT_EQ(e.CreateChunkName(), second);
+    ASSERT_EQ(e.CreateChunkName(), third);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    NamingTests, ChunkNameTest,
+    NameValues, ChunkNameSuite,
     ::testing::Values(std::make_tuple("basename", "basename#0", "basename#1",
                                       "basename#2"),
                       std::make_tuple("basename.0", "basename.0#0",
@@ -35,6 +36,14 @@ INSTANTIATE_TEST_SUITE_P(
                                       "helloworld.1.1#1", "helloworld.1.1#2"),
                       std::make_tuple("helloworld#1", "helloworld#1#0",
                                       "helloworld#1#1", "helloworld#1#2")));
+
+TEST(ChunkNameSuite, EmptyNameThrowsTest)
+{
+    adios2::transport::FileFlexNVMe e(adios2::helper::CommDummy());
+    e.Open("", adios2::Mode::Undefined);
+
+    ASSERT_THROW(e.CreateChunkName(), std::range_error);
+}
 
 int main(int argc, char **argv)
 {

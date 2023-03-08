@@ -10,6 +10,7 @@
 #include "FileFlexNVMe.h"
 #include "adios2/helper/adiosLog.h"
 #include <iostream>
+#include <stdexcept>
 
 #ifdef ADIOS2_HAVE_O_DIRECT
 #ifndef _GNU_SOURCE
@@ -108,7 +109,7 @@ std::string FileFlexNVMe::CreateChunkName()
 {
     if (m_baseName == "")
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::range_error>(
             "Toolkit", "transport::file::FileFlexNVMe", "CreateChunkName",
             "Empty filenames are not supported");
     }
