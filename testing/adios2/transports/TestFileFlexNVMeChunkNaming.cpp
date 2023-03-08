@@ -1,7 +1,6 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/toolkit/transport/file/FileFlexNVMe.h"
-#include "adios2/toolkit/transport/file/FilePOSIX.h"
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <tuple>
