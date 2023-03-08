@@ -5,3 +5,4 @@
 
 gtest_add_tests_helper(File MPI_NONE "" Transports. "")
 gtest_add_tests_helper(FileFlexNVMeChunkNaming MPI_NONE "" Transports. "")
+gtest_add_tests_helper(FileFlexNVMeChunkSize MPI_NONE "" Transports. "")
