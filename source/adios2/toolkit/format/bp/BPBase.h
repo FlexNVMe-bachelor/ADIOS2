@@ -376,7 +376,8 @@ protected:
         METHOD_FSTREAM = 26,
         METHOD_FILE = 27,
         METHOD_ZMQ = 28,
-        METHOD_MDTM = 29
+        METHOD_MDTM = 29,
+        METHOD_FLEXNVME = 30
     };
 
     /** DataTypes mapping in BP Format, adios1 legacy */
@@ -474,8 +475,8 @@ protected:
      * @param transformType input
      * @return corresponding enum TransformTypes
      */
-    TransformTypes TransformTypeEnum(const std::string transformType) const
-        noexcept;
+    TransformTypes
+    TransformTypeEnum(const std::string transformType) const noexcept;
 
     /**
      * Returns the proper derived class for BPOperation based on type
@@ -567,9 +568,8 @@ protected:
      * @param transportsTypes input user transports
      * @return vector with enum IO_METHOD
      */
-    std::vector<uint8_t>
-    GetTransportIDs(const std::vector<std::string> &transportsTypes) const
-        noexcept;
+    std::vector<uint8_t> GetTransportIDs(
+        const std::vector<std::string> &transportsTypes) const noexcept;
 
     /**
      * Calculates the Process Index size in bytes according to the BP

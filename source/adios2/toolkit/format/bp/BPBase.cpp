@@ -14,6 +14,7 @@
 #include "adios2/helper/adiosFunctions.h"
 
 #include "adios2/toolkit/format/bp/bpBackCompatOperation/compress/BPBackCompatBlosc.h"
+#include <iostream>
 
 namespace adios2
 {
@@ -354,12 +355,12 @@ void BPBase::DeleteBuffers()
 }
 
 // PROTECTED
-std::vector<uint8_t>
-BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
-    noexcept
+std::vector<uint8_t> BPBase::GetTransportIDs(
+    const std::vector<std::string> &transportsTypes) const noexcept
 {
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
         int id = METHOD_UNKNOWN;
+        std::cout << "Method: " << method << "\n";
         if (method == "File_NULL")
         {
             id = METHOD_NULL;
@@ -367,6 +368,10 @@ BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
         else if (method == "File_POSIX")
         {
             id = METHOD_POSIX;
+        }
+        else if (method == "File_FlexNVMe")
+        {
+            id = METHOD_FLEXNVME;
         }
         else if (method == "File_fstream")
         {
@@ -395,10 +400,10 @@ BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
     return transportsIDs;
 }
 
-size_t BPBase::GetProcessGroupIndexSize(const std::string name,
-                                        const std::string timeStepName,
-                                        const size_t transportsSize) const
-    noexcept
+size_t
+BPBase::GetProcessGroupIndexSize(const std::string name,
+                                 const std::string timeStepName,
+                                 const size_t transportsSize) const noexcept
 {
     // pgIndex + list of methods (transports)
     const size_t pgSize =

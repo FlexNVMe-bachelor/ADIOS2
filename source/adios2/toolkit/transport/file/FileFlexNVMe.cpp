@@ -37,6 +37,7 @@ namespace transport
 FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
 : Transport("File", "FlexNVMe", comm)
 {
+    std::cout << "Constructor was called\n";
 }
 
 FileFlexNVMe::~FileFlexNVMe() noexcept { Close(); }
@@ -46,6 +47,7 @@ FileFlexNVMe::~FileFlexNVMe() noexcept { Close(); }
 void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
                         const bool /*async*/, const bool /*directio*/)
 {
+    std::cout << "Open was called\n";
     m_Name = name;
     m_OpenMode = openMode;
 
