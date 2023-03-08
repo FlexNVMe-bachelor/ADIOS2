@@ -38,9 +38,7 @@ FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
 {
 }
 
-FileFlexNVME::~FileFlexNVME() {}
-
-void FileFlexNVME::WaitForOpen() {}
+FileFlexNVMe::~FileFlexNVMe() {}
 
 void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
                         const bool async, const bool directio)
@@ -53,7 +51,7 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
 {
 }
 
-void FileFlexNVME::Write(const char *buffer, size_t size, size_t start) {}
+void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start) {}
 
 #ifdef REALLY_WANT_WRITEV
 void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
@@ -62,19 +60,19 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 }
 #endif
 
-void FileFlexNVME::Read(char *buffer, size_t size, size_t start) {}
+void FileFlexNVMe::Read(char *buffer, size_t size, size_t start) {}
 
-size_t FileFlexNVME::GetSize() {}
+size_t FileFlexNVMe::GetSize() {}
 
-void FileFlexNVME::Flush() {}
+void FileFlexNVMe::Flush() {}
 
-void FileFlexNVME::Close() {}
+void FileFlexNVMe::Close() {}
 
-void FileFlexNVME::Delete() {}
+void FileFlexNVMe::Delete() {}
 
-void FileFlexNVME::Seek(const size_t start) {}
+void FileFlexNVMe::Seek(const size_t start) {}
 
-void FileFlexNVME::Truncate(const size_t length) {}
+void FileFlexNVMe::Truncate(const size_t length) {}
 
 void FileFlexNVMe::MkDir(const std::string &fileName) {}
 

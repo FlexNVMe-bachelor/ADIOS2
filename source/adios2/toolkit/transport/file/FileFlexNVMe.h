@@ -67,20 +67,6 @@ public:
     void MkDir(const std::string &fileName) final;
 
 private:
-    /** xNVME file handle returned by Open */
-    int m_FileDescriptor = -1;
-    int m_Errno = 0;
-    bool m_IsOpening = false;
-    std::future<int> m_OpenFuture;
-    bool m_DirectIO = false;
-
-    /**
-     * Check if m_FileDescriptor is -1 after an operation
-     * @param hint exception message
-     */
-    void CheckFile(const std::string hint) const;
-    void WaitForOpen();
-    std::string SysErrMsg() const;
 };
 
 } // end namespace transport
