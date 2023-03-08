@@ -360,7 +360,6 @@ std::vector<uint8_t> BPBase::GetTransportIDs(
 {
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
         int id = METHOD_UNKNOWN;
-        std::cout << "Method: " << method << "\n";
         if (method == "File_NULL")
         {
             id = METHOD_NULL;

@@ -49,8 +49,6 @@ namespace transportman
 TransportMan::TransportMan(core::IO &io, helper::Comm &comm)
 : m_IO(io), m_Comm(comm)
 {
-    std::cout << "TransportMan\n";
-    printf("TransportManprint\n");
 }
 
 void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
@@ -257,8 +255,6 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
 void TransportMan::WriteFileAt(const char *buffer, const size_t size,
                                const size_t start, const int transportIndex)
 {
-    std::cout << "WriteFileAt\n";
-
     if (transportIndex == -1)
     {
         for (auto &transportPair : m_Transports)
