@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEDESCRIPTOR_H_
-#define ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEDESCRIPTOR_H_
+#ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FLEXNVME_H_
+#define ADIOS2_TOOLKIT_TRANSPORT_FILE_FLEXNVME_H_
 
 #include <future> //std::async, std::future
 
@@ -67,23 +67,9 @@ public:
     void MkDir(const std::string &fileName) final;
 
 private:
-    /** xNVME file handle returned by Open */
-    int m_FileDescriptor = -1;
-    int m_Errno = 0;
-    bool m_IsOpening = false;
-    std::future<int> m_OpenFuture;
-    bool m_DirectIO = false;
-
-    /**
-     * Check if m_FileDescriptor is -1 after an operation
-     * @param hint exception message
-     */
-    void CheckFile(const std::string hint) const;
-    void WaitForOpen();
-    std::string SysErrMsg() const;
 };
 
 } // end namespace transport
 } // end namespace adios2
 
-#endif /* ADIOS2_TRANSPORT_FILE_FILEDESCRIPTOR_H_ */
+#endif /* ADIOS2_TOOLKIT_TRANSPORT_FILE_FLEXNVME_H_ */
