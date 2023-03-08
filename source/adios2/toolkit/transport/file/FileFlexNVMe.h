@@ -62,6 +62,10 @@ public:
 
     void Delete() final;
 
+    void SeekToEnd() final;
+
+    void SeekToBegin() final;
+
     void Seek(const size_t start = MaxSizeT) final;
 
     void Truncate(const size_t length) final;

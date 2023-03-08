@@ -44,7 +44,7 @@ FileFlexNVMe::~FileFlexNVMe() noexcept { Close(); }
 // TODO(adbo): s:
 //  - Async open/close?
 void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
-                        const bool  /*async*/, const bool  /*directio*/)
+                        const bool /*async*/, const bool /*directio*/)
 {
     m_Name = name;
     m_OpenMode = openMode;
@@ -126,6 +126,10 @@ void FileFlexNVMe::Close()
 }
 
 void FileFlexNVMe::Delete() {}
+
+void FileFlexNVMe::SeekToEnd(){};
+
+void FileFlexNVMe::SeekToBegin(){};
 
 void FileFlexNVMe::Seek(const size_t start) {}
 
