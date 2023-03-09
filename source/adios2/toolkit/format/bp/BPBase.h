@@ -376,8 +376,7 @@ protected:
         METHOD_FSTREAM = 26,
         METHOD_FILE = 27,
         METHOD_ZMQ = 28,
-        METHOD_MDTM = 29,
-        METHOD_FLEXNVME = 30
+        METHOD_MDTM = 29
     };
 
     /** DataTypes mapping in BP Format, adios1 legacy */

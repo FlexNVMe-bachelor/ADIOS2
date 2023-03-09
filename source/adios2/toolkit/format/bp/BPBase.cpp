@@ -367,10 +367,6 @@ std::vector<uint8_t> BPBase::GetTransportIDs(
         {
             id = METHOD_POSIX;
         }
-        else if (method == "File_FlexNVMe")
-        {
-            id = METHOD_FLEXNVME;
-        }
         else if (method == "File_fstream")
         {
             id = METHOD_FSTREAM;
