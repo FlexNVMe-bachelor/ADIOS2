@@ -9,6 +9,8 @@
  */
 #include "FileFlexNVMe.h"
 #include "adios2/helper/adiosLog.h"
+#include <cstdlib>
+#include <iostream>
 
 #ifdef ADIOS2_HAVE_O_DIRECT
 #ifndef _GNU_SOURCE
@@ -34,20 +36,28 @@ namespace adios2
 namespace transport
 {
 
+int FileFlexNVMe::refCount = 0;
+struct flan_handle *FileFlexNVMe::flanh = nullptr;
+
 FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
 : Transport("File", "FlexNVMe", comm)
 {
     std::cout << "Constructor was called\n";
+    FileFlexNVMe::refCount++;
 }
 
-FileFlexNVMe::~FileFlexNVMe() noexcept { Close(); }
+FileFlexNVMe::~FileFlexNVMe() noexcept
+{
+    FileFlexNVMe::refCount--;
+    Close();
+}
 
-// TODO(adbo): s:
+// TODO(adbo):
 //  - Async open/close?
+//  - Remove printf/cout
 void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
                         const bool /*async*/, const bool /*directio*/)
 {
-    std::cout << "Open was called\n";
     m_Name = name;
     m_OpenMode = openMode;
 
@@ -65,26 +75,29 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
     }
 
     ProfilerStart("open");
-    struct fla_pool_create_arg pool_arg = {
-        .flags = 0,
-        .name = const_cast<char *>(name.c_str()),
-        .name_len = static_cast<int>(name.length() + 1),
-        .obj_nlb = 0, // will get set by flan_init
-        .strp_nobjs = 0,
-        .strp_nbytes = 0};
 
-    uint64_t obj_size = 4096;
-    char *device_uri = "/dev/loop11";
-
-    printf("Opening flan\n");
-    if (flan_init(device_uri, nullptr, &pool_arg, obj_size, &flanh))
+    if (FileFlexNVMe::refCount == 0)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVMe", "Open",
-            "failed to initialise flan in call to FlexNVMe open: " +
-                ErrnoErrMsg());
+        struct fla_pool_create_arg pool_arg = {
+            .flags = 0,
+            .name = const_cast<char *>(name.c_str()),
+            .name_len = static_cast<int>(name.length() + 1),
+            .obj_nlb = 0, // will get set by flan_init
+            .strp_nobjs = 0,
+            .strp_nbytes = 0};
+
+        uint64_t obj_size = 4096;
+        char *device_uri = "/dev/loop11";
+
+        if (flan_init(device_uri, nullptr, &pool_arg, obj_size,
+                      &FileFlexNVMe::flanh))
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileFlexNVMe", "Open",
+                "failed to initialise flan in call to FlexNVMe open: " +
+                    ErrnoErrMsg());
+        }
     }
-    printf("Initialised flan\n");
 
     m_IsOpen = true;
 
@@ -120,11 +133,14 @@ void FileFlexNVMe::Flush() {}
 
 void FileFlexNVMe::Close()
 {
-    if (m_IsOpen)
+    if (FileFlexNVMe::refCount <= 0)
     {
-        flan_close(flanh);
-        m_IsOpen = false;
+        flan_close(FileFlexNVMe::flanh);
+        FileFlexNVMe::flanh = nullptr;
+        std::cout << "Closed flan\n";
     }
+
+    m_IsOpen = false;
 }
 
 void FileFlexNVMe::Delete() {}

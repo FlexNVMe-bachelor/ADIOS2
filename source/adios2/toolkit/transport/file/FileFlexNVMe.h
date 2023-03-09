@@ -74,7 +74,8 @@ public:
 
 private:
     std::string pool_name;
-    struct flan_handle *flanh = nullptr;
+    static struct flan_handle *flanh;
+    static int refCount;
 
     auto ErrnoErrMsg() const -> std::string;
 };
