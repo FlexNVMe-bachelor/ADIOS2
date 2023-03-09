@@ -72,12 +72,17 @@ public:
 
     void MkDir(const std::string &fileName) final;
 
+    std::string CreateChunkName();
+
 private:
     std::string pool_name;
     static struct flan_handle *flanh;
     static int refCount;
 
     auto ErrnoErrMsg() const -> std::string;
+    size_t m_chunkWrites = 0;
+    size_t m_chunkSize = 0;
+    std::string m_baseName = "";
 };
 
 } // end namespace transport
