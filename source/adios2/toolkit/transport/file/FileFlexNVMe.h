@@ -79,6 +79,8 @@ public:
 private:
     std::string m_DeviceUrl;
     std::string pool_name;
+    std::string m_PoolName;
+
     static struct flan_handle *flanh;
     static int refCount;
 
@@ -88,6 +90,8 @@ private:
 
     auto ErrnoErrMsg() const -> std::string;
     void InitFlan(const std::string &name);
+
+    size_t m_ObjectSize = 0;
 };
 
 } // end namespace transport

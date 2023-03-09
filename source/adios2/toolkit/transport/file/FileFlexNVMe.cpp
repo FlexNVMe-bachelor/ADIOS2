@@ -31,25 +31,47 @@ FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
     FileFlexNVMe::refCount++;
 }
 
-FileFlexNVMe::~FileFlexNVMe() {}
+FileFlexNVMe::~FileFlexNVMe() noexcept
+{
+
+    FileFlexNVMe::refCount--;
+    Close();
+}
 
 void FileFlexNVMe::SetParameters(const Params &params)
 {
     helper::SetParameterValue("device_url", params, m_DeviceUrl);
-    std::cout << "Parameter value: " << m_DeviceUrl << "\n";
+    std::cout << "Parameter value (device): " << m_DeviceUrl << "\n";
     if (m_DeviceUrl.empty())
     {
         helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
-            "device_url paramater has not been set");
+            "device_url parameter has not been set");
     }
-}
 
-void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
-                        const bool async, const bool directio)
-{
-    FileFlexNVMe::refCount--;
-    Close();
+    helper::SetParameterValue("pool_name", params, m_PoolName);
+    std::cout << "Parameter value (pool): " << m_PoolName << "\n";
+    if (m_PoolName.empty())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
+            "pool_name parameter has not been set");
+    }
+
+    std::string tmpObjSize;
+    helper::SetParameterValue("object_size", params, tmpObjSize);
+    std::cout << "Parameter value (object): " << tmpObjSize << "\n";
+    if (tmpObjSize.empty())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
+            "object_size parameter has not been set");
+    }
+    else
+    {
+        m_ObjectSize = static_cast<size_t>(
+            helper::StringTo<size_t>(tmpObjSize, "Object size"));
+    }
 }
 
 // TODO(adbo):
