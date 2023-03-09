@@ -79,10 +79,12 @@ private:
     static struct flan_handle *flanh;
     static int refCount;
 
-    auto ErrnoErrMsg() const -> std::string;
     size_t m_chunkWrites = 0;
     size_t m_chunkSize = 0;
     std::string m_baseName = "";
+
+    auto ErrnoErrMsg() const -> std::string;
+    void InitFlan(const std::string &name);
 };
 
 } // end namespace transport

@@ -11,7 +11,6 @@
 #include "adios2/helper/adiosLog.h"
 #include <cstdlib>
 #include <iostream>
-#include <iostream>
 #include <stdexcept>
 
 #ifdef ADIOS2_HAVE_O_DIRECT
@@ -78,32 +77,44 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
 
     ProfilerStart("open");
 
-    if (FileFlexNVMe::flanh == nullptr)
-    {
-        struct fla_pool_create_arg pool_arg = {
-            .flags = 0,
-            .name = const_cast<char *>(name.c_str()),
-            .name_len = static_cast<int>(name.length() + 1),
-            .obj_nlb = 0, // will get set by flan_init
-            .strp_nobjs = 0,
-            .strp_nbytes = 0};
-
-        uint64_t obj_size = 4096;
-        char *device_uri = "/dev/loop11";
-
-        if (flan_init(device_uri, nullptr, &pool_arg, obj_size,
-                      &FileFlexNVMe::flanh))
-        {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileFlexNVMe", "Open",
-                "failed to initialise flan in call to FlexNVMe open: " +
-                    ErrnoErrMsg());
-        }
-    }
-
+    // TODO(adbo): take as parameter
+    InitFlan("tmp hardcoded pool name");
     m_IsOpen = true;
 
     ProfilerStop("open");
+}
+
+void FileFlexNVMe::InitFlan(const std::string &pool_name)
+{
+    if (FileFlexNVMe::flanh != nullptr)
+    {
+        return;
+    }
+
+    struct fla_pool_create_arg pool_arg = {
+        .flags = 0,
+        .name = const_cast<char *>(pool_name.c_str()),
+        .name_len = static_cast<int>(pool_name.length() + 1),
+        .obj_nlb = 0, // will get set by flan_init
+        .strp_nobjs = 0,
+        .strp_nbytes = 0};
+
+    // TODO(adbo): take as argument
+    uint64_t obj_size = 4096;
+    char *device_uri = "/dev/loop11";
+
+    if (flan_init(device_uri, nullptr, &pool_arg, obj_size,
+                  &FileFlexNVMe::flanh))
+    {
+        // We have to reset the address to null because flan_init can change its
+        // value even when it fails.
+        FileFlexNVMe::flanh = nullptr;
+
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "Open",
+            "failed to initialise flan in call to FlexNVMe open: " +
+                ErrnoErrMsg());
+    }
 }
 
 auto FileFlexNVMe::ErrnoErrMsg() const -> std::string
