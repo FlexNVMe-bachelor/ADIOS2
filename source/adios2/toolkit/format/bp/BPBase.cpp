@@ -14,7 +14,6 @@
 #include "adios2/helper/adiosFunctions.h"
 
 #include "adios2/toolkit/format/bp/bpBackCompatOperation/compress/BPBackCompatBlosc.h"
-#include <iostream>
 
 namespace adios2
 {

@@ -137,7 +137,6 @@ void FileFlexNVMe::Close()
     {
         flan_close(FileFlexNVMe::flanh);
         FileFlexNVMe::flanh = nullptr;
-        std::cout << "Closed flan\n";
     }
 
     m_IsOpen = false;
