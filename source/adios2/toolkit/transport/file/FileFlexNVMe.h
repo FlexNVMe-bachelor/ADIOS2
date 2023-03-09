@@ -16,6 +16,8 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
 
+#include <flan.h>
+
 namespace adios2
 {
 namespace helper
@@ -30,9 +32,9 @@ class FileFlexNVMe : public Transport
 {
 
 public:
-    FileFlexNVMe(helper::Comm const &comm);
+    explicit FileFlexNVMe(helper::Comm const &comm);
 
-    ~FileFlexNVMe();
+    ~FileFlexNVMe() noexcept;
 
     void Open(const std::string &name, const Mode openMode,
               const bool async = false, const bool directio = false) final;
@@ -73,9 +75,16 @@ public:
     std::string CreateChunkName();
 
 private:
+    std::string pool_name;
+    static struct flan_handle *flanh;
+    static int refCount;
+
     size_t m_chunkWrites = 0;
     size_t m_chunkSize = 0;
     std::string m_baseName = "";
+
+    auto ErrnoErrMsg() const -> std::string;
+    void InitFlan(const std::string &name);
 };
 
 } // end namespace transport

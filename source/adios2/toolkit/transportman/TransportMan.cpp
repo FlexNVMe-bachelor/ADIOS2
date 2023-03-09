@@ -20,6 +20,9 @@
 #ifndef _WIN32
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
 #endif
+#ifdef ADIOS2_HAVE_FLAN
+#include "adios2/toolkit/transport/file/FileFlexNVMe.h"
+#endif
 #ifdef ADIOS2_HAVE_DAOS
 #include "adios2/toolkit/transport/file/FileDaos.h"
 #endif
@@ -574,6 +577,18 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
         else if (library == "posix")
         {
             transport = std::make_shared<transport::FilePOSIX>(m_Comm);
+            if (lf_GetBuffered("false"))
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "TransportMan", "OpenFileTransport",
+                    library + " transport does not support buffered I/O.");
+            }
+        }
+#endif
+#ifdef ADIOS2_HAVE_FLAN
+        else if (library == "flexnvme")
+        {
+            transport = std::make_shared<transport::FileFlexNVMe>(m_Comm);
             if (lf_GetBuffered("false"))
             {
                 helper::Throw<std::invalid_argument>(

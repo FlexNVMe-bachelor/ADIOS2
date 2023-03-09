@@ -163,7 +163,11 @@ target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEA
 
 if(UNIX)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FilePOSIX.cpp)
+endif()
+
+if(ADIOS2_HAVE_FLAN)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileFlexNVMe.cpp)
+  target_link_libraries(adios2_core PRIVATE flan)
 endif()
 
 if(ADIOS2_HAVE_AWSSDK)
