@@ -79,7 +79,7 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
 
     ProfilerStart("open");
 
-    if (FileFlexNVMe::refCount == 0)
+    if (FileFlexNVMe::flanh == nullptr)
     {
         struct fla_pool_create_arg pool_arg = {
             .flags = 0,
