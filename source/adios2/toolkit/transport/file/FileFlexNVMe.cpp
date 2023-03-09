@@ -13,12 +13,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#ifdef ADIOS2_HAVE_O_DIRECT
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#endif
-
 #include <flan.h>
 
 namespace adios2
