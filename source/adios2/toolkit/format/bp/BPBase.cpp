@@ -394,10 +394,10 @@ std::vector<uint8_t> BPBase::GetTransportIDs(
     return transportsIDs;
 }
 
-size_t
-BPBase::GetProcessGroupIndexSize(const std::string name,
-                                 const std::string timeStepName,
-                                 const size_t transportsSize) const noexcept
+size_t BPBase::GetProcessGroupIndexSize(const std::string name,
+                                        const std::string timeStepName,
+                                        const size_t transportsSize) const
+    noexcept
 {
     // pgIndex + list of methods (transports)
     const size_t pgSize =
