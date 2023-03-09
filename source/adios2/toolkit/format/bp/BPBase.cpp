@@ -354,8 +354,9 @@ void BPBase::DeleteBuffers()
 }
 
 // PROTECTED
-std::vector<uint8_t> BPBase::GetTransportIDs(
-    const std::vector<std::string> &transportsTypes) const noexcept
+std::vector<uint8_t>
+BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
+    noexcept
 {
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
         int id = METHOD_UNKNOWN;
