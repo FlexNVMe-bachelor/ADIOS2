@@ -9,6 +9,8 @@
  */
 #include "FileFlexNVMe.h"
 #include "adios2/helper/adiosLog.h"
+#include <iostream>
+#include <stdexcept>
 
 #ifdef ADIOS2_HAVE_O_DIRECT
 #ifndef _GNU_SOURCE
@@ -43,15 +45,39 @@ FileFlexNVMe::~FileFlexNVMe() {}
 void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
                         const bool async, const bool directio)
 {
+    m_baseName = name;
 }
 
 void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
                              const helper::Comm &chainComm, const bool async,
                              const bool directio)
 {
+    m_baseName = name;
 }
 
-void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start) {}
+void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
+{
+    // Set the chunk size since it's not been set before.
+    if (m_chunkSize == 0)
+    {
+        m_chunkSize = size;
+    }
+    else if (m_chunkSize > size)
+    {
+        helper::Log("Toolkit", "transport::file::FileFlexNVMe", "Write",
+                    "Dynamic chunk sizes are not supported by FlexNVMe. It "
+                    "will be saved, but will be space inefficient",
+                    helper::WARNING);
+    }
+    else if (m_chunkSize < size)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "Write",
+            "Chunksize cannot be bigger than the first chunk written");
+    }
+
+    std::string objectName = CreateChunkName();
+}
 
 #ifdef REALLY_WANT_WRITEV
 void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
@@ -70,11 +96,31 @@ void FileFlexNVMe::Close() {}
 
 void FileFlexNVMe::Delete() {}
 
+void FileFlexNVMe::SeekToEnd() {}
+
+void FileFlexNVMe::SeekToBegin() {}
+
 void FileFlexNVMe::Seek(const size_t start) {}
 
 void FileFlexNVMe::Truncate(const size_t length) {}
 
 void FileFlexNVMe::MkDir(const std::string &fileName) {}
+
+std::string FileFlexNVMe::CreateChunkName()
+{
+    if (m_baseName == "")
+    {
+        helper::Throw<std::range_error>(
+            "Toolkit", "transport::file::FileFlexNVMe", "CreateChunkName",
+            "Empty filenames are not supported");
+    }
+
+    std::string base = m_baseName;
+    base += "#" + std::to_string(m_chunkWrites);
+    m_chunkWrites += 1;
+
+    return base;
+}
 
 } // end namespace transport
 } // end namespace adios2

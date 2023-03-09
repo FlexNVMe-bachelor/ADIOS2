@@ -60,13 +60,22 @@ public:
 
     void Delete() final;
 
+    void SeekToEnd() final;
+
+    void SeekToBegin() final;
+
     void Seek(const size_t start = MaxSizeT) final;
 
     void Truncate(const size_t length) final;
 
     void MkDir(const std::string &fileName) final;
 
+    std::string CreateChunkName();
+
 private:
+    size_t m_chunkWrites = 0;
+    size_t m_chunkSize = 0;
+    std::string m_baseName = "";
 };
 
 } // end namespace transport
