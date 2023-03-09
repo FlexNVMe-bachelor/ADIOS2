@@ -44,7 +44,6 @@ struct flan_handle *FileFlexNVMe::flanh = nullptr;
 FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
 : Transport("File", "FlexNVMe", comm)
 {
-    std::cout << "Constructor was called\n";
     FileFlexNVMe::refCount++;
 }
 
