@@ -19,18 +19,7 @@
 #endif
 #endif
 
-#include <cstdio>  // remove
-#include <cstring> // strerror
-#include <errno.h> // errno
-#include <fcntl.h> // open
 #include <flan.h>
-#include <sys/stat.h>  // open, fstat
-#include <sys/types.h> // open
-#include <unistd.h>    // write, close, ftruncate
-
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <ios> //std::ios_base::failure
-/// \endcond
 
 namespace adios2
 {
