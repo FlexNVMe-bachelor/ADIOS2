@@ -11,6 +11,7 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FLEXNVME_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_FLEXNVME_H_
 
+#include <cstdint>
 #include <future> //std::async, std::future
 
 #include "adios2/common/ADIOSConfig.h"
@@ -84,7 +85,9 @@ private:
     std::string m_baseName = "";
 
     auto ErrnoErrMsg() const -> std::string;
+
     void InitFlan(const std::string &name);
+    auto OpenFlanObject(std::string &objectName) -> uint64_t;
 };
 
 } // end namespace transport
