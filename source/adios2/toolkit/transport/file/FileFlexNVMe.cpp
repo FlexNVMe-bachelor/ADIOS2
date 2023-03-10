@@ -8,8 +8,11 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "FileFlexNVMe.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosLog.h"
+#include <cstdint>
 #include <cstdlib>
+#include <ios>
 #include <iostream>
 #include <stdexcept>
 
@@ -135,6 +138,17 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
     }
 
     std::string objectName = CreateChunkName();
+
+    uint64_t obj_handle = OpenFlanObject(objectName);
+
+    if (flan_object_write(obj_handle,
+                          static_cast<void *>(const_cast<char *>(buffer)), 0,
+                          size, FileFlexNVMe::flanh))
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "Write",
+            "Failed to write chunk " + objectName);
+    }
 }
 
 #ifdef REALLY_WANT_WRITEV
@@ -187,6 +201,19 @@ std::string FileFlexNVMe::CreateChunkName()
     m_chunkWrites += 1;
 
     return base;
+}
+
+auto FileFlexNVMe::OpenFlanObject(std::string &objectName) -> uint64_t
+{
+    uint64_t obj_handle = 0;
+    if (flan_object_open(objectName.c_str(), FileFlexNVMe::flanh, &obj_handle,
+                         FLAN_OPEN_FLAG_CREATE | FLAN_OPEN_FLAG_WRITE))
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "Write",
+            "Failed to open object " + objectName);
+    }
+    return obj_handle;
 }
 
 } // end namespace transport
