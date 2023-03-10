@@ -116,6 +116,10 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
     m_baseName = name;
 }
 
+// TODO(adbo):
+//   - Set chunk size via parameters or make them static, because
+//     currently they are not shared across transport instances
+//   - Use the start parameter?
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 {
     // Set the chunk size since it's not been set before.
