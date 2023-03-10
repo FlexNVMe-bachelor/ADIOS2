@@ -164,7 +164,7 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 
 void FileFlexNVMe::Read(char *buffer, size_t size, size_t start) {}
 
-size_t FileFlexNVMe::GetSize() {}
+size_t FileFlexNVMe::GetSize() { return 0; }
 
 void FileFlexNVMe::Flush() {}
 
