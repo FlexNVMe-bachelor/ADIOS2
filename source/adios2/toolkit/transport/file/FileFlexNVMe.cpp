@@ -143,9 +143,9 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 
     std::string objectName = CreateChunkName();
 
-    uint64_t obj_handle = OpenFlanObject(objectName);
+    uint64_t objectHandle = OpenFlanObject(objectName);
 
-    if (flan_object_write(obj_handle,
+    if (flan_object_write(objectHandle,
                           static_cast<void *>(const_cast<char *>(buffer)), 0,
                           size, FileFlexNVMe::flanh))
     {
@@ -209,15 +209,15 @@ std::string FileFlexNVMe::CreateChunkName()
 
 auto FileFlexNVMe::OpenFlanObject(std::string &objectName) -> uint64_t
 {
-    uint64_t obj_handle = 0;
-    if (flan_object_open(objectName.c_str(), FileFlexNVMe::flanh, &obj_handle,
+    uint64_t objectHandle = 0;
+    if (flan_object_open(objectName.c_str(), FileFlexNVMe::flanh, &objectHandle,
                          FLAN_OPEN_FLAG_CREATE | FLAN_OPEN_FLAG_WRITE))
     {
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::file::FileFlexNVMe", "Write",
             "Failed to open object " + objectName);
     }
-    return obj_handle;
+    return objectHandle;
 }
 
 } // end namespace transport
