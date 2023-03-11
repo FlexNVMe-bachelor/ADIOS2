@@ -10,11 +10,14 @@
 #include "FileFlexNVMe.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosLog.h"
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <ios>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 #include <flan.h>
 
@@ -46,7 +49,7 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
 {
     m_Name = name;
     m_OpenMode = openMode;
-    m_baseName = name;
+    m_baseName = NormalisedObjectName(const_cast<std::string &>(name));
 
     switch (m_OpenMode)
     {
@@ -173,7 +176,30 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 
 void FileFlexNVMe::Read(char *buffer, size_t size, size_t start) {}
 
-size_t FileFlexNVMe::GetSize() { return 0; }
+size_t FileFlexNVMe::GetSize()
+{
+    if (FileFlexNVMe::flanh == nullptr)
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
+            "GetSize called before Open");
+    }
+
+    // TODO(adbo): iterate over all chunks
+    std::string objectName = TmpCreateChunkName(0);
+
+    struct flan_oinfo *objectInfo =
+        flan_find_oinfo(FileFlexNVMe::flanh, objectName.c_str(), nullptr);
+
+    if (objectInfo == nullptr)
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
+            "Object '" + m_Name + "' not found (chunk: '" + objectName + "')");
+    }
+
+    return objectInfo->size;
+}
 
 void FileFlexNVMe::Flush() {}
 
@@ -200,6 +226,20 @@ void FileFlexNVMe::Truncate(const size_t length) {}
 
 void FileFlexNVMe::MkDir(const std::string &fileName) {}
 
+std::string FileFlexNVMe::NormalisedObjectName(std::string &input)
+{
+    std::string normalised = input;
+    std::replace(normalised.begin(), normalised.end(), '/', '_');
+    return normalised;
+}
+
+std::string FileFlexNVMe::TmpCreateChunkName(size_t chunkNum)
+{
+    std::string base = m_baseName;
+    base += "#" + std::to_string(chunkNum);
+    return base;
+}
+
 std::string FileFlexNVMe::CreateChunkName()
 {
     if (m_baseName == "")
@@ -209,11 +249,10 @@ std::string FileFlexNVMe::CreateChunkName()
             "Empty filenames are not supported");
     }
 
-    std::string base = m_baseName;
-    base += "#" + std::to_string(m_chunkWrites);
+    std::string objectName = TmpCreateChunkName(m_chunkWrites);
     m_chunkWrites += 1;
 
-    return base;
+    return objectName;
 }
 
 auto FileFlexNVMe::OpenFlanObject(std::string &objectName) -> uint64_t

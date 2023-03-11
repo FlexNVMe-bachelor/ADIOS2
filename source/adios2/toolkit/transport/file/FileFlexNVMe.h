@@ -87,6 +87,8 @@ private:
     auto ErrnoErrMsg() const -> std::string;
 
     void InitFlan(const std::string &name);
+    auto NormalisedObjectName(std::string &input) -> std::string;
+    auto TmpCreateChunkName(size_t chunkNum) -> std::string;
     auto OpenFlanObject(std::string &objectName) -> uint64_t;
 };
 
