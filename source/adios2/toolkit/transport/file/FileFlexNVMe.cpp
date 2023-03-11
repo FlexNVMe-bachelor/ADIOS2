@@ -165,6 +165,8 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
             "Toolkit", "transport::file::FileFlexNVMe", "Write",
             "Failed to write chunk " + objectName);
     }
+
+    CloseFlanObject(objectHandle);
 }
 
 #ifdef REALLY_WANT_WRITEV
@@ -266,6 +268,16 @@ auto FileFlexNVMe::OpenFlanObject(std::string &objectName) -> uint64_t
             "Failed to open object " + objectName);
     }
     return objectHandle;
+}
+
+void FileFlexNVMe::CloseFlanObject(uint64_t objectHandle)
+{
+    if (flan_object_close(objectHandle, FileFlexNVMe::flanh))
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "Write",
+            "Failed to close chunk object");
+    }
 }
 
 } // end namespace transport

@@ -90,6 +90,7 @@ private:
     auto NormalisedObjectName(std::string &input) -> std::string;
     auto TmpCreateChunkName(size_t chunkNum) -> std::string;
     auto OpenFlanObject(std::string &objectName) -> uint64_t;
+    void CloseFlanObject(uint64_t objectHandle);
 };
 
 } // end namespace transport
