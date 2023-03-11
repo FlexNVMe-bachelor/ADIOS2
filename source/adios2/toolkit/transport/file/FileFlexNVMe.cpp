@@ -153,7 +153,7 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
             "Chunksize cannot be bigger than the first chunk written");
     }
 
-    std::string objectName = CreateChunkName();
+    std::string objectName = IncrementChunkName();
 
     uint64_t objectHandle = OpenFlanObject(objectName);
 
@@ -188,7 +188,7 @@ size_t FileFlexNVMe::GetSize()
     }
 
     // TODO(adbo): iterate over all chunks
-    std::string objectName = TmpCreateChunkName(0);
+    std::string objectName = GenerateChunkName(0);
 
     struct flan_oinfo *objectInfo =
         flan_find_oinfo(FileFlexNVMe::flanh, objectName.c_str(), nullptr);
@@ -235,14 +235,7 @@ std::string FileFlexNVMe::NormalisedObjectName(std::string &input)
     return normalised;
 }
 
-std::string FileFlexNVMe::TmpCreateChunkName(size_t chunkNum)
-{
-    std::string base = m_baseName;
-    base += "#" + std::to_string(chunkNum);
-    return base;
-}
-
-std::string FileFlexNVMe::CreateChunkName()
+std::string FileFlexNVMe::GenerateChunkName(size_t chunkNum)
 {
     if (m_baseName == "")
     {
@@ -251,9 +244,15 @@ std::string FileFlexNVMe::CreateChunkName()
             "Empty filenames are not supported");
     }
 
-    std::string objectName = TmpCreateChunkName(m_chunkWrites);
-    m_chunkWrites += 1;
+    std::string base = m_baseName;
+    base += "#" + std::to_string(chunkNum);
+    return base;
+}
 
+std::string FileFlexNVMe::IncrementChunkName()
+{
+    std::string objectName = GenerateChunkName(m_chunkWrites);
+    m_chunkWrites += 1;
     return objectName;
 }
 

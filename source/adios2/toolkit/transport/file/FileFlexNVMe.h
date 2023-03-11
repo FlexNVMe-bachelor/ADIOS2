@@ -73,7 +73,7 @@ public:
 
     void MkDir(const std::string &fileName) final;
 
-    std::string CreateChunkName();
+    std::string IncrementChunkName();
 
 private:
     std::string pool_name;
@@ -88,7 +88,7 @@ private:
 
     void InitFlan(const std::string &name);
     auto NormalisedObjectName(std::string &input) -> std::string;
-    auto TmpCreateChunkName(size_t chunkNum) -> std::string;
+    auto GenerateChunkName(size_t chunkNum) -> std::string;
     auto OpenFlanObject(std::string &objectName) -> uint64_t;
     void CloseFlanObject(uint64_t objectHandle);
 };
