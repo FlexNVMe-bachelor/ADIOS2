@@ -96,10 +96,19 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
         // value even when it fails.
         FileFlexNVMe::flanh = nullptr;
 
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVMe", "Open",
+        std::string err =
             "failed to initialise flan in call to FlexNVMe open: " +
-                ErrnoErrMsg());
+            ErrnoErrMsg();
+
+        if (errno == 22)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileFlexNVMe", "Open",
+                err + ". You may need to mkfs.flexalloc the storage device.");
+        }
+
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "Open", err);
     }
 }
 
