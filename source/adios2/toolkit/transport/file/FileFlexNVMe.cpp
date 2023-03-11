@@ -10,11 +10,14 @@
 #include "FileFlexNVMe.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosLog.h"
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <ios>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 #include <flan.h>
 
@@ -46,7 +49,7 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
 {
     m_Name = name;
     m_OpenMode = openMode;
-    m_baseName = name;
+    m_baseName = NormalisedObjectName(const_cast<std::string &>(name));
 
     switch (m_OpenMode)
     {
@@ -96,10 +99,19 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
         // value even when it fails.
         FileFlexNVMe::flanh = nullptr;
 
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVMe", "Open",
+        std::string err =
             "failed to initialise flan in call to FlexNVMe open: " +
-                ErrnoErrMsg());
+            ErrnoErrMsg();
+
+        if (errno == 22)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileFlexNVMe", "Open",
+                err + ". You may need to mkfs.flexalloc the storage device.");
+        }
+
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "Open", err);
     }
 }
 
@@ -141,7 +153,7 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
             "Chunksize cannot be bigger than the first chunk written");
     }
 
-    std::string objectName = CreateChunkName();
+    std::string objectName = IncrementChunkName();
 
     uint64_t objectHandle = OpenFlanObject(objectName);
 
@@ -153,6 +165,8 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
             "Toolkit", "transport::file::FileFlexNVMe", "Write",
             "Failed to write chunk " + objectName);
     }
+
+    CloseFlanObject(objectHandle);
 }
 
 #ifdef REALLY_WANT_WRITEV
@@ -164,7 +178,30 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 
 void FileFlexNVMe::Read(char *buffer, size_t size, size_t start) {}
 
-size_t FileFlexNVMe::GetSize() {}
+size_t FileFlexNVMe::GetSize()
+{
+    if (FileFlexNVMe::flanh == nullptr)
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
+            "GetSize called before Open");
+    }
+
+    // TODO(adbo): iterate over all chunks
+    std::string objectName = GenerateChunkName(0);
+
+    struct flan_oinfo *objectInfo =
+        flan_find_oinfo(FileFlexNVMe::flanh, objectName.c_str(), nullptr);
+
+    if (objectInfo == nullptr)
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
+            "Object '" + m_Name + "' not found (chunk: '" + objectName + "')");
+    }
+
+    return objectInfo->size;
+}
 
 void FileFlexNVMe::Flush() {}
 
@@ -191,7 +228,14 @@ void FileFlexNVMe::Truncate(const size_t length) {}
 
 void FileFlexNVMe::MkDir(const std::string &fileName) {}
 
-std::string FileFlexNVMe::CreateChunkName()
+std::string FileFlexNVMe::NormalisedObjectName(std::string &input)
+{
+    std::string normalised = input;
+    std::replace(normalised.begin(), normalised.end(), '/', '_');
+    return normalised;
+}
+
+std::string FileFlexNVMe::GenerateChunkName(size_t chunkNum)
 {
     if (m_baseName == "")
     {
@@ -201,10 +245,15 @@ std::string FileFlexNVMe::CreateChunkName()
     }
 
     std::string base = m_baseName;
-    base += "#" + std::to_string(m_chunkWrites);
-    m_chunkWrites += 1;
-
+    base += "#" + std::to_string(chunkNum);
     return base;
+}
+
+std::string FileFlexNVMe::IncrementChunkName()
+{
+    std::string objectName = GenerateChunkName(m_chunkWrites);
+    m_chunkWrites += 1;
+    return objectName;
 }
 
 auto FileFlexNVMe::OpenFlanObject(std::string &objectName) -> uint64_t
@@ -218,6 +267,16 @@ auto FileFlexNVMe::OpenFlanObject(std::string &objectName) -> uint64_t
             "Failed to open object " + objectName);
     }
     return objectHandle;
+}
+
+void FileFlexNVMe::CloseFlanObject(uint64_t objectHandle)
+{
+    if (flan_object_close(objectHandle, FileFlexNVMe::flanh))
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "Write",
+            "Failed to close chunk object");
+    }
 }
 
 } // end namespace transport

@@ -20,9 +20,9 @@ TEST_P(ChunkNameSuite, CreateChunkNameTest)
 
     adios2::transport::FileFlexNVMe e(adios2::helper::CommDummy());
     e.Open(baseName, adios2::Mode::Undefined);
-    ASSERT_EQ(e.CreateChunkName(), first);
-    ASSERT_EQ(e.CreateChunkName(), second);
-    ASSERT_EQ(e.CreateChunkName(), third);
+    ASSERT_EQ(e.IncrementChunkName(), first);
+    ASSERT_EQ(e.IncrementChunkName(), second);
+    ASSERT_EQ(e.IncrementChunkName(), third);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -41,7 +41,7 @@ TEST(ChunkNameSuite, EmptyNameThrowsTest)
     adios2::transport::FileFlexNVMe e(adios2::helper::CommDummy());
     e.Open("", adios2::Mode::Undefined);
 
-    ASSERT_THROW(e.CreateChunkName(), std::range_error);
+    ASSERT_THROW(e.IncrementChunkName(), std::range_error);
 }
 
 int main(int argc, char **argv)
