@@ -26,11 +26,16 @@ if((NOT FLEXALLOC_ROOT) AND (NOT (ENV{FLEXALLOC_ROOT} STREQUAL "")))
 endif()
 
 if(FLEXALLOC_ROOT)
-  set(FLEXALLOC_INCLUDE_OPTS HINTS ${FLEXALLOC_ROOT})
-  set(FLEXALLOC_LIBRARY_OPTS HINTS ${FLEXALLOC_ROOT})
+  # This is the behavior of meson install with custom install directory
+  set(FLEXALLOC_INCLUDE_OPTS HINTS ${FLEXALLOC_ROOT} ${FLEXALLOC_ROOT}/usr/local/include)
+  set(FLEXALLOC_LIBRARY_OPTS HINTS ${FLEXALLOC_ROOT} ${FLEXALLOC_ROOT}/usr/local/lib/x86_64-linux-gnu)
 endif()
 
-find_path(FLEXALLOC_INCLUDE_DIR libflexalloc.h ${FLEXALLOC_INCLUDE_OPTS})
+find_path(
+  FLEXALLOC_INCLUDE_DIR 
+  NAMES libflexalloc.h flexalloc_mm.h
+  ${FLEXALLOC_INCLUDE_OPTS}
+)
 find_library(FLEXALLOC_LIBRARY libflexalloc.so ${FLEXALLOC_LIBRARY_OPTS})
 
 include(FindPackageHandleStandardArgs)
@@ -43,4 +48,5 @@ if(FLEXALLOC_FOUND)
   set(FLEXALLOC_INCLUDE_DIR ${FLEXALLOC_INCLUDE_DIR})
   set(FLEXALLOC_LIBRARY ${FLEXALLOC_LIBRARY})
   message(STATUS "FLEXALLOC library \"${FLEXALLOC_LIBRARY}\"")
+  message(STATUS "FLEXALLOC include \"${FLEXALLOC_INCLUDE_DIR}\"")
 endif()

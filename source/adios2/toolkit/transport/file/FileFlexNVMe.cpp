@@ -84,9 +84,8 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
 
     // TODO(adbo): take as argument
     uint64_t obj_size = 4096;
-    char *device_uri = "/dev/loop11";
 
-    if (flan_init(device_uri, nullptr, &pool_arg, obj_size,
+    if (flan_init(deviceUrl, nullptr, &pool_arg, obj_size,
                   &FileFlexNVMe::flanh))
     {
         // We have to reset the address to null because flan_init can change its

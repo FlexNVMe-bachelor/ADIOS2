@@ -32,6 +32,8 @@ class FileFlexNVMe : public Transport
 {
 
 public:
+    char *deviceUrl = "/dev/loop11";
+
     explicit FileFlexNVMe(helper::Comm const &comm);
 
     ~FileFlexNVMe() noexcept;
