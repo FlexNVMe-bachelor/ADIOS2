@@ -176,7 +176,41 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 }
 #endif
 
-void FileFlexNVMe::Read(char *buffer, size_t size, size_t start) {}
+void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
+{
+    // TODO(adbo): all chunks naming
+    std::string objectName = GenerateChunkName(0);
+
+    std::cout << "Reading " << objectName << "\n";
+
+    uint64_t objectHandle = OpenFlanObject(objectName);
+
+    int objectSize = 4096;
+
+    char *buf = (char *)flan_buf_alloc(objectSize, FileFlexNVMe::flanh);
+
+    std::cout << "Object handle " << objectHandle << "\n";
+
+    ssize_t num_bytes_read =
+        flan_object_read(objectHandle, buf, 0, objectSize, FileFlexNVMe::flanh);
+
+    memcpy(buffer, buf, num_bytes_read);
+
+    printf("Read data (%ld bytes): %s\n", num_bytes_read, buf);
+
+    for (int i = 0; i < num_bytes_read; i++)
+    {
+        printf("%02X ", buf[i]);
+    }
+    printf("\n");
+
+    // struct flan_oinfo *objectInfo =
+    //     flan_find_oinfo(FileFlexNVMe::flanh, objectName.c_str(), nullptr);
+    //
+    // std::cout << "yikers: " << objectInfo->size << "\n";
+
+    CloseFlanObject(objectHandle);
+}
 
 size_t FileFlexNVMe::GetSize()
 {
@@ -187,20 +221,26 @@ size_t FileFlexNVMe::GetSize()
             "GetSize called before Open");
     }
 
-    // TODO(adbo): iterate over all chunks
-    std::string objectName = GenerateChunkName(0);
+    struct flan_oinfo *objectInfo = nullptr;
+    int chunkNum = 0;
+    size_t totalSize = 0;
 
-    struct flan_oinfo *objectInfo =
-        flan_find_oinfo(FileFlexNVMe::flanh, objectName.c_str(), nullptr);
+    // TODO(adbo): extract to function like GetChunkInfo(chunkName)
+    while ((objectInfo = flan_find_oinfo(FileFlexNVMe::flanh,
+                                         GenerateChunkName(chunkNum++).c_str(),
+                                         nullptr)))
+    {
+        totalSize += objectInfo->size;
+    }
 
-    if (objectInfo == nullptr)
+    if (chunkNum == 0)
     {
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
-            "Object '" + m_Name + "' not found (chunk: '" + objectName + "')");
+            "Object '" + m_Name + "' not found");
     }
 
-    return objectInfo->size;
+    return totalSize;
 }
 
 void FileFlexNVMe::Flush() {}
