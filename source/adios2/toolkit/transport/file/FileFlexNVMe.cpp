@@ -8,6 +8,7 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "FileFlexNVMe.h"
+
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
@@ -37,40 +38,9 @@ FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
 
 FileFlexNVMe::~FileFlexNVMe() noexcept
 {
+
     FileFlexNVMe::refCount--;
     Close();
-}
-
-// TODO(adbo):
-//  - Async open/close?
-//  - Remove printf/cout
-void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
-                        const bool /*async*/, const bool /*directio*/)
-{
-    m_Name = name;
-    m_OpenMode = openMode;
-    m_baseName = name;
-
-    switch (m_OpenMode)
-    {
-    case Mode::Write:
-    case Mode::Read:
-        break;
-
-    // TODO(adbo): more open modes?
-    default:
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVMe", "Open",
-            "unknown open mode " + m_Name + " in call to FlexNVMe open");
-    }
-
-    ProfilerStart("open");
-
-    // TODO(adbo): take as parameter
-    InitFlan("tmp hardcoded pool name");
-    m_IsOpen = true;
-
-    ProfilerStop("open");
 }
 
 void FileFlexNVMe::SetParameters(const Params &params)
@@ -110,6 +80,38 @@ void FileFlexNVMe::SetParameters(const Params &params)
         m_objectSize = static_cast<size_t>(
             helper::StringTo<size_t>(tmpObjSize, "Object size"));
     }
+}
+
+// TODO(adbo):
+//  - Async open/close?
+//  - Remove printf/cout
+void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
+                        const bool /*async*/, const bool /*directio*/)
+{
+    m_Name = name;
+    m_OpenMode = openMode;
+    m_baseName = name;
+
+    switch (m_OpenMode)
+    {
+    case Mode::Write:
+    case Mode::Read:
+        break;
+
+    // TODO(adbo): more open modes?
+    default:
+        helper::Throw<std::ios_base::failure>(
+            "Toolkit", "transport::file::FileFlexNVMe", "Open",
+            "unknown open mode " + m_Name + " in call to FlexNVMe open");
+    }
+
+    ProfilerStart("open");
+
+    // TODO(adbo): take as parameter
+    InitFlan("tmp hardcoded pool name");
+    m_IsOpen = true;
+
+    ProfilerStop("open");
 }
 
 void FileFlexNVMe::InitFlan(const std::string &pool_name)

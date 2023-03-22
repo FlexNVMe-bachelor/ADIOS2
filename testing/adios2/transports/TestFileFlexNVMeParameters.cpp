@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
+#include <string>
 
-#include "adios2/helper/adiosCommDummy.h"
-#include "adios2/toolkit/transport/file/FileFlexNVMe.h"
-
+#include "adios2/cxx11/ADIOS.h"
 #include "disk/BackingFile.h"
 #include "disk/Loopback.h"
 #include "disk/mkfs.h"
@@ -12,10 +11,11 @@ class OpenTestSuite : public ::testing::Test
 protected:
     Disk::LoopbackDevice device;
     Disk::BackingFile backingFile;
+    size_t objSize = 64;
 
     OpenTestSuite()
     {
-        Disk::BackingFile bf(4096, 64);
+        Disk::BackingFile bf(4096, objSize);
         backingFile = bf;
         backingFile.Create();
 
@@ -27,15 +27,17 @@ protected:
     }
 };
 
-TEST_F(OpenTestSuite, CanOpenTest)
+TEST_F(OpenTestSuite, DefaultBehaviourTest)
 {
-    adios2::transport::FileFlexNVMe e(adios2::helper::CommDummy());
-    char *deviceUrl = const_cast<char *>(device.GetDeviceUrl().c_str());
-    // e.SetDevice(deviceUrl);
+    adios2::ADIOS adios;
+    adios2::IO io = adios.DeclareIO("TestIO");
 
-    // std::cout << "flexnvme deviceUrl: " << e.deviceUrl << "\n";
+    io.AddTransport("File", {{"Library", "flexnvme"},
+                             {"device_url", device.GetDeviceUrl()},
+                             {"object_size", std::to_string(objSize)},
+                             {"pool_name", "mypool"}});
 
-    // e.Open(deviceUrl, adios2::Mode::Write);
+    adios2::Engine engine = io.Open("test.bp", adios2::Mode::Write);
 }
 
 int main(int argc, char **argv)

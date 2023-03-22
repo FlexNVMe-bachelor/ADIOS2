@@ -38,6 +38,8 @@ public:
 
     ~FileFlexNVMe() noexcept;
 
+    void SetParameters(const Params &parameters);
+
     void Open(const std::string &name, const Mode openMode,
               const bool async = false, const bool directio = false) final;
 
@@ -75,8 +77,6 @@ public:
     void MkDir(const std::string &fileName) final;
 
     std::string CreateChunkName();
-
-    void SetParameters(const Params &params);
 
 private:
     char *m_deviceUrl = "";
