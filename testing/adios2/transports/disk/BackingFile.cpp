@@ -37,6 +37,10 @@ void BackingFile::Teardown()
         // Delete the file
         fs::remove(m_backingFilePath);
     }
+
+    m_backingFilePath = "";
+    m_backingFile = nullptr;
+    m_buffer = nullptr;
 }
 
 void BackingFile::CreateFile()
