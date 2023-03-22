@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace fs = std::experimental::filesystem;
@@ -42,6 +44,11 @@ void BackingFile::CreateFile()
                                        m_backingFilePath.filename().string());
 
     m_backingFile = fopen(m_backingFilePath.c_str(), "wb+");
+    if (!m_backingFile)
+    {
+        throw std::runtime_error("Failed to open the backing file: " +
+                                 m_backingFilePath.string());
+    }
 }
 
 void BackingFile::CreateZeroedBuffer()
@@ -53,7 +60,16 @@ void BackingFile::CreateZeroedBuffer()
 
 void BackingFile::WriteToDisk()
 {
-    fwrite(m_buffer, sizeof(char), GetByteSize(), m_backingFile);
+    size_t size = GetByteSize();
+    size_t written =
+        fwrite(m_buffer, sizeof(char), GetByteSize(), m_backingFile);
+
+    if (written != size)
+    {
+        throw std::runtime_error(
+            "Did not write all objects, errorcode/written objects: " +
+            std::to_string(written));
+    }
 }
 
 auto BackingFile::GetPath() -> std::string
