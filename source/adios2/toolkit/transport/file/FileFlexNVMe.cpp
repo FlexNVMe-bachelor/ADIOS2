@@ -10,6 +10,9 @@
 #include "FileFlexNVMe.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosString.h"
+
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <ios>
@@ -70,6 +73,45 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
     ProfilerStop("open");
 }
 
+void FileFlexNVMe::SetParameters(const Params &params)
+{
+    std::string tmp = "";
+    helper::SetParameterValue("device_url", params, tmp);
+    std::cout << "Parameter value (device): " << m_deviceUrl << "\n";
+    if (tmp.empty())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
+            "device_url parameter has not been set");
+    }
+
+    m_deviceUrl = const_cast<char *>(tmp.c_str());
+
+    helper::SetParameterValue("pool_name", params, m_poolName);
+    std::cout << "Parameter value (pool): " << m_poolName << "\n";
+    if (m_poolName.empty())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
+            "pool_name parameter has not been set");
+    }
+
+    std::string tmpObjSize;
+    helper::SetParameterValue("object_size", params, tmpObjSize);
+    std::cout << "Parameter value (object): " << tmpObjSize << "\n";
+    if (tmpObjSize.empty())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
+            "object_size parameter has not been set");
+    }
+    else
+    {
+        m_objectSize = static_cast<size_t>(
+            helper::StringTo<size_t>(tmpObjSize, "Object size"));
+    }
+}
+
 void FileFlexNVMe::InitFlan(const std::string &pool_name)
 {
     if (FileFlexNVMe::flanh != nullptr)
@@ -88,7 +130,7 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
     // TODO(adbo): take as argument
     uint64_t obj_size = 4096;
 
-    if (flan_init(deviceUrl, nullptr, &pool_arg, obj_size,
+    if (flan_init(m_deviceUrl, nullptr, &pool_arg, obj_size,
                   &FileFlexNVMe::flanh))
     {
         // We have to reset the address to null because flan_init can change its
