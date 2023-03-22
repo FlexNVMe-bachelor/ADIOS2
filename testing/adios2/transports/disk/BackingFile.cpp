@@ -18,7 +18,16 @@ BackingFile::BackingFile(size_t blockSize, size_t blockCount)
 
 BackingFile::BackingFile() = default;
 
-BackingFile::~BackingFile()
+BackingFile::~BackingFile() { Teardown(); }
+
+void BackingFile::Create()
+{
+    CreateFile();
+    CreateZeroedBuffer();
+    WriteToDisk();
+}
+
+void BackingFile::Teardown()
 {
     if (m_backingFile != nullptr)
     {
@@ -28,13 +37,6 @@ BackingFile::~BackingFile()
         // Delete the file
         fs::remove(m_backingFilePath);
     }
-}
-
-void BackingFile::Create()
-{
-    CreateFile();
-    CreateZeroedBuffer();
-    WriteToDisk();
 }
 
 void BackingFile::CreateFile()

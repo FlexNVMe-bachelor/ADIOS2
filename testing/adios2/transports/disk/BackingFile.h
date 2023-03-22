@@ -19,6 +19,7 @@ public:
 
     void Create();
     auto GetPath() -> std::string;
+    void Teardown();
 
 private:
     std::experimental::filesystem::path m_backingFilePath = "";
