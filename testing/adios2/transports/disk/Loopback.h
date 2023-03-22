@@ -10,9 +10,12 @@ class LoopbackDevice
 public:
     explicit LoopbackDevice(std::string backingFilePath);
     explicit LoopbackDevice();
+    ~LoopbackDevice();
 
     auto Create() -> std::string;
     auto GetDeviceUrl() -> std::string;
+
+    void Teardown();
 
 private:
     int m_LdctlFileDescriptor = -1;
