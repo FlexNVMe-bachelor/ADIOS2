@@ -45,20 +45,15 @@ FileFlexNVMe::~FileFlexNVMe() noexcept
 
 void FileFlexNVMe::SetParameters(const Params &params)
 {
-    std::string tmp = "";
-    helper::SetParameterValue("device_url", params, tmp);
-    std::cout << "Parameter value (device): " << m_deviceUrl << "\n";
-    if (tmp.empty())
+    helper::SetParameterValue("device_url", params, m_deviceUrl);
+    if (m_deviceUrl.empty())
     {
         helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
             "device_url parameter has not been set");
     }
 
-    m_deviceUrl = const_cast<char *>(tmp.c_str());
-
     helper::SetParameterValue("pool_name", params, m_poolName);
-    std::cout << "Parameter value (pool): " << m_poolName << "\n";
     if (m_poolName.empty())
     {
         helper::Throw<std::invalid_argument>(
@@ -68,7 +63,6 @@ void FileFlexNVMe::SetParameters(const Params &params)
 
     std::string tmpObjSize;
     helper::SetParameterValue("object_size", params, tmpObjSize);
-    std::cout << "Parameter value (object): " << tmpObjSize << "\n";
     if (tmpObjSize.empty())
     {
         helper::Throw<std::invalid_argument>(
@@ -130,10 +124,10 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
         .strp_nbytes = 0};
 
     // TODO(adbo): take as argument
-    uint64_t obj_size = 4096;
+    uint64_t obj_size = m_objectSize;
 
-    if (flan_init(m_deviceUrl, nullptr, &pool_arg, obj_size,
-                  &FileFlexNVMe::flanh))
+    if (flan_init(const_cast<char *>(m_deviceUrl.c_str()), nullptr, &pool_arg,
+                  obj_size, &FileFlexNVMe::flanh))
     {
         // We have to reset the address to null because flan_init can change its
         // value even when it fails.

@@ -79,8 +79,7 @@ public:
     std::string CreateChunkName();
 
 private:
-    char *m_deviceUrl = "";
-
+    std::string m_deviceUrl = "";
     std::string m_baseName = "";
     std::string m_poolName;
 
