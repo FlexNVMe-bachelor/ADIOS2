@@ -96,7 +96,8 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
     default:
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::file::FileFlexNVMe", "Open",
-            "unknown open mode " + m_Name + " in call to FlexNVMe open");
+            "unknown open mode for file " + m_Name +
+                " in call to FlexNVMe open");
     }
 
     ProfilerStart("open");
