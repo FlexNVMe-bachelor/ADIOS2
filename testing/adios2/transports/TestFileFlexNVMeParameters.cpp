@@ -11,11 +11,11 @@ class OpenTestSuite : public ::testing::Test
 protected:
     Disk::LoopbackDevice device;
     Disk::BackingFile backingFile;
-    size_t objSize = 64;
+    size_t objSize = 4096;
 
     OpenTestSuite()
     {
-        Disk::BackingFile bf(4096, objSize);
+        Disk::BackingFile bf(objSize, 32);
         backingFile = bf;
         backingFile.Create();
 
