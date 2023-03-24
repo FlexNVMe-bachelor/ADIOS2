@@ -26,8 +26,8 @@ if((NOT FLAN_ROOT) AND (NOT (ENV{FLAN_ROOT} STREQUAL "")))
 endif()
 
 if(FLAN_ROOT)
-  set(FLAN_INCLUDE_OPTS HINTS ${FLAN_ROOT})
-  set(FLAN_LIBRARY_OPTS HINTS ${FLAN_ROOT})
+  set(FLAN_INCLUDE_OPTS HINTS ${FLAN_ROOT} ${FLAN_ROOT}/usr/local/include)
+  set(FLAN_LIBRARY_OPTS HINTS ${FLAN_ROOT} ${FLAN_ROOT}/usr/local/lib/x86_64-linux-gnu)
 endif()
 
 find_path(FLAN_INCLUDE_DIR flan.h ${FLAN_INCLUDE_OPTS})

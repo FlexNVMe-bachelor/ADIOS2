@@ -458,6 +458,13 @@ if(ADIOS2_USE_FLAN AND UNIX)
 	if(FLAN_FOUND)
 		set(ADIOS2_HAVE_FLAN TRUE)
 	endif()
+
+  find_package(flexalloc)
+  message(STATUS "Flexalloc found: \"${FLEXALLOC_FOUND}\"")
+  if(FLEXALLOC_FOUND)
+    set(ADIOS2_HAVE_FLEXALLOC TRUE)
+    message(STATUS "Flexalloc have: \"${ADIOS2_HAVE_FLEXALLOC}\"")
+  endif()
 endif()
 
 #SysV IPC

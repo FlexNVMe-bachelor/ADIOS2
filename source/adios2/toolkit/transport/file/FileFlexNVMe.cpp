@@ -8,8 +8,12 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "FileFlexNVMe.h"
+
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosString.h"
+
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <ios>
@@ -38,6 +42,39 @@ FileFlexNVMe::~FileFlexNVMe() noexcept
     Close();
 }
 
+void FileFlexNVMe::SetParameters(const Params &params)
+{
+    helper::SetParameterValue("device_url", params, m_deviceUrl);
+    if (m_deviceUrl.empty())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
+            "device_url parameter has not been set");
+    }
+
+    helper::SetParameterValue("pool_name", params, m_poolName);
+    if (m_poolName.empty())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
+            "pool_name parameter has not been set");
+    }
+
+    std::string tmpObjSize;
+    helper::SetParameterValue("object_size", params, tmpObjSize);
+    if (tmpObjSize.empty())
+    {
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "transport::file::FileFlexNVMe", "SetParameters",
+            "object_size parameter has not been set");
+    }
+    else
+    {
+        m_objectSize = static_cast<size_t>(
+            helper::StringTo<size_t>(tmpObjSize, "Object size"));
+    }
+}
+
 // TODO(adbo):
 //  - Async open/close?
 //  - Remove printf/cout
@@ -58,13 +95,13 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
     default:
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::file::FileFlexNVMe", "Open",
-            "unknown open mode " + m_Name + " in call to FlexNVMe open");
+            "unknown open mode for file " + m_Name +
+                " in call to FlexNVMe open");
     }
 
     ProfilerStart("open");
 
-    // TODO(adbo): take as parameter
-    InitFlan("tmp hardcoded pool name");
+    InitFlan(m_poolName);
     m_IsOpen = true;
 
     ProfilerStop("open");
@@ -85,12 +122,10 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
         .strp_nobjs = 0,
         .strp_nbytes = 0};
 
-    // TODO(adbo): take as argument
-    uint64_t obj_size = 4096;
-    char *device_uri = "/dev/loop11";
+    uint64_t obj_size = m_objectSize;
 
-    if (flan_init(device_uri, nullptr, &pool_arg, obj_size,
-                  &FileFlexNVMe::flanh))
+    if (flan_init(const_cast<char *>(m_deviceUrl.c_str()), nullptr, &pool_arg,
+                  obj_size, &FileFlexNVMe::flanh))
     {
         // We have to reset the address to null because flan_init can change its
         // value even when it fails.
@@ -116,29 +151,13 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
     m_baseName = name;
 }
 
-// TODO(adbo):
-//   - Set chunk size via parameters or make them static, because
-//     currently they are not shared across transport instances
-//   - Use the start parameter?
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 {
-    // Set the chunk size since it's not been set before.
-    if (m_chunkSize == 0)
-    {
-        m_chunkSize = size;
-    }
-    else if (m_chunkSize > size)
-    {
-        helper::Log("Toolkit", "transport::file::FileFlexNVMe", "Write",
-                    "Dynamic chunk sizes are not supported by FlexNVMe. It "
-                    "will be saved, but will be space inefficient",
-                    helper::WARNING);
-    }
-    else if (m_chunkSize < size)
+    if (m_objectSize < size)
     {
         helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "Write",
-            "Chunksize cannot be bigger than the first chunk written");
+            "Chunksize cannot be bigger than the given object size");
     }
 
     std::string objectName = CreateChunkName();
