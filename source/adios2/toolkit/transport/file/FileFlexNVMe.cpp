@@ -101,8 +101,7 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
 
     ProfilerStart("open");
 
-    // TODO(adbo): take as parameter
-    InitFlan("tmp hardcoded pool name");
+    InitFlan(m_poolName);
     m_IsOpen = true;
 
     ProfilerStop("open");
@@ -123,7 +122,6 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
         .strp_nobjs = 0,
         .strp_nbytes = 0};
 
-    // TODO(adbo): take as argument
     uint64_t obj_size = m_objectSize;
 
     if (flan_init(const_cast<char *>(m_deviceUrl.c_str()), nullptr, &pool_arg,
@@ -153,29 +151,13 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
     m_baseName = name;
 }
 
-// TODO(adbo):
-//   - Set chunk size via parameters or make them static, because
-//     currently they are not shared across transport instances
-//   - Use the start parameter?
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 {
-    // Set the chunk size since it's not been set before.
-    if (m_chunkSize == 0)
-    {
-        m_chunkSize = size;
-    }
-    else if (m_chunkSize > size)
-    {
-        helper::Log("Toolkit", "transport::file::FileFlexNVMe", "Write",
-                    "Dynamic chunk sizes are not supported by FlexNVMe. It "
-                    "will be saved, but will be space inefficient",
-                    helper::WARNING);
-    }
-    else if (m_chunkSize < size)
+    if (m_objectSize < size)
     {
         helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "Write",
-            "Chunksize cannot be bigger than the first chunk written");
+            "Chunksize cannot be bigger than the given object size");
     }
 
     std::string objectName = CreateChunkName();

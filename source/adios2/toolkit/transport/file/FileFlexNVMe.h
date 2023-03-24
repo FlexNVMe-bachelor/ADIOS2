@@ -84,7 +84,6 @@ private:
     std::string m_poolName;
 
     size_t m_chunkWrites = 0;
-    size_t m_chunkSize = 0;
     size_t m_objectSize = 0;
 
     static struct flan_handle *flanh;
