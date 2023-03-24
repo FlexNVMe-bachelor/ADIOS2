@@ -1,14 +1,20 @@
-#include "adios2/common/ADIOSTypes.h"
-#include "adios2/helper/adiosCommDummy.h"
-#include "adios2/toolkit/transport/file/FileFlexNVMe.h"
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <tuple>
 
-class ChunkNameSuite
-: public ::testing::TestWithParam<
-      std::tuple<std::string, std::string, std::string, std::string>>
+#include "adios2/common/ADIOSTypes.h"
+#include "adios2/helper/adiosCommDummy.h"
+#include "adios2/toolkit/transport/file/FileFlexNVMe.h"
+
+#include "disk/DiskTestClass.h"
+
+using ParamType =
+    std::tuple<std::string, std::string, std::string, std::string>;
+
+class ChunkNameSuite : public Disk::DiskTestClassWithParams<ParamType>
 {
+protected:
+    ChunkNameSuite() : Disk::DiskTestClassWithParams<ParamType>(4096, 64, 32) {}
 };
 
 TEST_P(ChunkNameSuite, CreateChunkNameTest)
@@ -19,7 +25,9 @@ TEST_P(ChunkNameSuite, CreateChunkNameTest)
     const std::string &third = std::get<3>(GetParam());
 
     adios2::transport::FileFlexNVMe e(adios2::helper::CommDummy());
-    e.Open(baseName, adios2::Mode::Undefined);
+    e.SetParameters(GetParams());
+    e.Open(baseName, adios2::Mode::Write);
+
     ASSERT_EQ(e.CreateChunkName(), first);
     ASSERT_EQ(e.CreateChunkName(), second);
     ASSERT_EQ(e.CreateChunkName(), third);
@@ -36,20 +44,17 @@ INSTANTIATE_TEST_SUITE_P(
                       std::make_tuple("helloworld#1", "helloworld#1#0",
                                       "helloworld#1#1", "helloworld#1#2")));
 
-TEST(ChunkNameSuite, EmptyNameThrowsTest)
+TEST_F(ChunkNameSuite, EmptyNameThrowsTest)
 {
     adios2::transport::FileFlexNVMe e(adios2::helper::CommDummy());
-    e.Open("", adios2::Mode::Undefined);
+    e.SetParameters(GetParams());
+    e.Open("", adios2::Mode::Write);
 
     ASSERT_THROW(e.CreateChunkName(), std::range_error);
 }
 
 int main(int argc, char **argv)
 {
-    int result;
     ::testing::InitGoogleTest(&argc, argv);
-
-    result = RUN_ALL_TESTS();
-
-    return result;
+    return RUN_ALL_TESTS();
 }

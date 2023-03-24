@@ -2,39 +2,24 @@
 #include <string>
 
 #include "adios2/cxx11/ADIOS.h"
-#include "disk/BackingFile.h"
-#include "disk/Loopback.h"
-#include "disk/mkfs.h"
 
-class OpenTestSuite : public ::testing::Test
+#include "disk/DiskTestClass.h"
+
+class ParameterTestSuite : public Disk::DiskTestClass
 {
 protected:
-    Disk::LoopbackDevice device;
-    Disk::BackingFile backingFile;
-    size_t objSize = 4096;
-
-    OpenTestSuite()
-    {
-        Disk::BackingFile bf(objSize, 32);
-        backingFile = bf;
-        backingFile.Create();
-
-        Disk::LoopbackDevice dev(backingFile.GetPath());
-        device = dev;
-        device.Create();
-
-        mkfs(device.GetDeviceUrl(), 32);
-    }
+    ParameterTestSuite() : Disk::DiskTestClass(4096, 64, 32) {}
 };
 
-TEST_F(OpenTestSuite, DefaultBehaviourTest)
+TEST_F(ParameterTestSuite, DefaultBehaviourTest)
 {
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("TestIO");
 
+    // This does creates the same params as GetParams()
     io.AddTransport("File", {{"Library", "flexnvme"},
                              {"device_url", device.GetDeviceUrl()},
-                             {"object_size", std::to_string(objSize)},
+                             {"object_size", std::to_string(m_blockSize)},
                              {"pool_name", "mypool"}});
 
     adios2::Engine engine = io.Open("test.bp", adios2::Mode::Write);
