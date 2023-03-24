@@ -11,9 +11,6 @@
 #include <unistd.h>
 #include <utility>
 
-// TODO: Errors
-// TODO: Cleanup
-
 namespace Disk
 {
 LoopbackDevice::LoopbackDevice(std::string backingFilePath)
