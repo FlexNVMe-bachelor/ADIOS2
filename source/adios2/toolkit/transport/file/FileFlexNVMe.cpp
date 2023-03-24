@@ -38,7 +38,6 @@ FileFlexNVMe::FileFlexNVMe(helper::Comm const &comm)
 
 FileFlexNVMe::~FileFlexNVMe() noexcept
 {
-
     FileFlexNVMe::refCount--;
     Close();
 }
