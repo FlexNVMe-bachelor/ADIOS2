@@ -15,6 +15,7 @@
 #include <future> //std::async, std::future
 
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/toolkit/transport/Transport.h"
 
 #include <flan.h>
@@ -36,6 +37,8 @@ public:
     explicit FileFlexNVMe(helper::Comm const &comm);
 
     ~FileFlexNVMe() noexcept;
+
+    void SetParameters(const Params &parameters);
 
     void Open(const std::string &name, const Mode openMode,
               const bool async = false, const bool directio = false) final;
@@ -76,13 +79,15 @@ public:
     std::string IncrementChunkName();
 
 private:
-    std::string pool_name;
-    static struct flan_handle *flanh;
-    static int refCount;
+    std::string m_deviceUrl = "";
+    std::string m_baseName = "";
+    std::string m_poolName;
 
     size_t m_chunkWrites = 0;
-    size_t m_chunkSize = 0;
-    std::string m_baseName = "";
+    size_t m_objectSize = 0;
+
+    static struct flan_handle *flanh;
+    static int refCount;
 
     auto ErrnoErrMsg() const -> std::string;
 
