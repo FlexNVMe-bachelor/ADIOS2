@@ -312,14 +312,6 @@ std::string FileFlexNVMe::GenerateChunkName(size_t chunkNum)
     return base;
 }
 
-// TODO(adbo): delete this method completely, we don't need it with the way we should handle writes
-std::string FileFlexNVMe::IncrementChunkName()
-{
-    std::string objectName = GenerateChunkName(m_chunkWrites);
-    m_chunkWrites += 1;
-    return objectName;
-}
-
 auto FileFlexNVMe::OpenFlanObject(std::string &objectName) -> uint64_t
 {
     uint64_t objectHandle = 0;
