@@ -22,6 +22,7 @@
 #include <string>
 
 #include <flan.h>
+#include <utility>
 
 namespace adios2
 {
@@ -163,30 +164,55 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
 
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 {
-    if (m_objectSize < size)
+    // TODO(adbo): is this ok? do we have to maintain a cursor that leaves off
+    // where the previous read ended in this case?
+    if (start == MaxSizeT)
     {
-        helper::Throw<std::invalid_argument>(
-            "Toolkit", "transport::file::FileFlexNVMe", "Write",
-            "Chunksize cannot be bigger than the given object size");
+        start = 0;
     }
 
-    std::string objectName = IncrementChunkName();
+    ChunkLocation startLoc = CalculateChunkLocation(start);
+    ChunkLocation endLoc = CalculateChunkLocation(start + size);
 
-    std::cout << "Writing " << size << " bytes to " << objectName << " with offset "
-              << start << "\n";
-
-    uint64_t objectHandle = OpenFlanObject(objectName);
-
-    if (flan_object_write(objectHandle,
-                          static_cast<void *>(const_cast<char *>(buffer)), 0,
-                          size, FileFlexNVMe::flanh))
+    size_t curChunk = startLoc.chunkNum;
+    const char *writePointer = buffer;
+    while (curChunk <= endLoc.chunkNum)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVMe", "Write",
-            "Failed to write chunk " + objectName);
-    }
+        size_t subSize = m_objectSize;
+        size_t subOffset = 0;
 
-    CloseFlanObject(objectHandle);
+        // In the first chunk, we can start at any point in the chunk
+        if (curChunk == startLoc.chunkNum)
+        {
+            subSize -= startLoc.chunkOffset;
+            subOffset = startLoc.chunkOffset;
+        }
+
+        // In the last chunk (which can possibly the same as the first chunk),
+        // we might have to not write until the end of the chunk
+        if (curChunk == endLoc.chunkNum)
+        {
+            subSize = endLoc.chunkOffset - subOffset;
+        }
+
+        std::string objectName = GenerateChunkName(curChunk);
+
+        uint64_t objectHandle = OpenFlanObject(
+            objectName, FLAN_OPEN_FLAG_CREATE | FLAN_OPEN_FLAG_WRITE);
+
+        if (flan_object_write(objectHandle, const_cast<char *>(buffer),
+                              subOffset, subSize, FileFlexNVMe::flanh))
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileFlexNVMe", "Write",
+                "Failed to write chunk " + objectName);
+        }
+
+        CloseFlanObject(objectHandle);
+
+        curChunk++;
+        writePointer += subSize;
+    }
 }
 
 #ifdef REALLY_WANT_WRITEV
@@ -198,38 +224,49 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 
 void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
 {
-    // TODO(adbo): all chunks naming
-    std::string objectName = GenerateChunkName(0);
+    ChunkLocation startLoc = CalculateChunkLocation(start);
+    ChunkLocation endLoc = CalculateChunkLocation(start + size);
 
-    std::cout << "Reading " << objectName << "\n";
-
-    uint64_t objectHandle = OpenFlanObject(objectName);
-
-    int objectSize = 4096;
-
-    char *buf = (char *)flan_buf_alloc(objectSize, FileFlexNVMe::flanh);
-
-    std::cout << "Object handle " << objectHandle << "\n";
-
-    ssize_t num_bytes_read =
-        flan_object_read(objectHandle, buf, 0, objectSize, FileFlexNVMe::flanh);
-
-    memcpy(buffer, buf, num_bytes_read);
-
-    printf("Read data (%ld bytes): %s\n", num_bytes_read, buf);
-
-    for (int i = 0; i < num_bytes_read; i++)
+    size_t curChunk = startLoc.chunkNum;
+    char *readPointer = buffer;
+    while (curChunk <= endLoc.chunkNum)
     {
-        printf("%02X ", buf[i]);
+        size_t subSize = m_objectSize;
+        size_t subOffset = 0;
+
+        // In the first chunk, we can start at any point in the chunk
+        if (curChunk == startLoc.chunkNum)
+        {
+            subSize -= startLoc.chunkOffset;
+            subOffset = startLoc.chunkOffset;
+        }
+
+        // In the last chunk (which can possibly the same as the first chunk),
+        // we might have to not read until the end of the chunk
+        if (curChunk == endLoc.chunkNum)
+        {
+            subSize = endLoc.chunkOffset - subOffset;
+        }
+
+        std::string objectName = GenerateChunkName(curChunk);
+
+        // This will throw if the chunk doesn't exist
+        uint64_t objectHandle = OpenFlanObject(objectName);
+        ssize_t numBytesRead = flan_object_read(
+            objectHandle, readPointer, subOffset, subSize, FileFlexNVMe::flanh);
+        CloseFlanObject(objectHandle);
+
+        if (numBytesRead < subSize)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Toolkit", "transport::file::FileFlexNVMe", "Read",
+                "Failed to read '" + m_Name +
+                    "' because more bytes were requested than were stored");
+        }
+
+        curChunk++;
+        readPointer += subSize;
     }
-    printf("\n");
-
-    // struct flan_oinfo *objectInfo =
-    //     flan_find_oinfo(FileFlexNVMe::flanh, objectName.c_str(), nullptr);
-    //
-    // std::cout << "yikers: " << objectInfo->size << "\n";
-
-    CloseFlanObject(objectHandle);
 }
 
 size_t FileFlexNVMe::GetSize()
@@ -259,9 +296,6 @@ size_t FileFlexNVMe::GetSize()
             "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
             "Object '" + m_Name + "' not found");
     }
-
-    std::cout << "Total size for " << m_Name << " is " << totalSize
-              << " bytes\n";
 
     return totalSize;
 }
@@ -312,14 +346,21 @@ std::string FileFlexNVMe::GenerateChunkName(size_t chunkNum)
     return base;
 }
 
-auto FileFlexNVMe::OpenFlanObject(std::string &objectName) -> uint64_t
+inline auto FileFlexNVMe::CalculateChunkLocation(size_t offset) -> ChunkLocation
+{
+    return {.chunkNum = offset / m_objectSize,
+            .chunkOffset = offset % m_objectSize};
+}
+
+auto FileFlexNVMe::OpenFlanObject(std::string &objectName, int flags)
+    -> uint64_t
 {
     uint64_t objectHandle = 0;
     if (flan_object_open(objectName.c_str(), FileFlexNVMe::flanh, &objectHandle,
-                         FLAN_OPEN_FLAG_CREATE | FLAN_OPEN_FLAG_WRITE))
+                         flags))
     {
         helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVMe", "Write",
+            "Toolkit", "transport::file::FileFlexNVMe", "OpenChunk",
             "Failed to open object " + objectName);
     }
     return objectHandle;
@@ -330,7 +371,7 @@ void FileFlexNVMe::CloseFlanObject(uint64_t objectHandle)
     if (flan_object_close(objectHandle, FileFlexNVMe::flanh))
     {
         helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileFlexNVMe", "Write",
+            "Toolkit", "transport::file::FileFlexNVMe", "CloseChunk",
             "Failed to close chunk object");
     }
 }
