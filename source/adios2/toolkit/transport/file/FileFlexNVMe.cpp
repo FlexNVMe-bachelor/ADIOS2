@@ -155,6 +155,9 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 
     std::string objectName = IncrementChunkName();
 
+    std::cout << "Writing " << size << " bytes to " << objectName << " with offset "
+              << start << "\n";
+
     uint64_t objectHandle = OpenFlanObject(objectName);
 
     if (flan_object_write(objectHandle,
@@ -239,6 +242,9 @@ size_t FileFlexNVMe::GetSize()
             "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
             "Object '" + m_Name + "' not found");
     }
+
+    std::cout << "Total size for " << m_Name << " is " << totalSize
+              << " bytes\n";
 
     return totalSize;
 }
