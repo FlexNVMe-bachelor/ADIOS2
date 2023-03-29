@@ -34,7 +34,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(std::make_tuple("basename", 0, "basename#0"),
                       std::make_tuple("basename.0", 0, "basename.0#0"),
                       std::make_tuple("hello/world/", 1, "hello_world_#1"),
-                      std::make_tuple("hello/world#", 1, "hello_world#1#1")));
+                      std::make_tuple("hello/world#1", 1, "hello_world#1#1")));
 
 TEST_F(ChunkNameSuite, EmptyNameThrowsTest)
 {
