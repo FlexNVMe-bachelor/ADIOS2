@@ -200,7 +200,7 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
         uint64_t objectHandle = OpenFlanObject(
             objectName, FLAN_OPEN_FLAG_CREATE | FLAN_OPEN_FLAG_WRITE);
 
-        if (flan_object_write(objectHandle, const_cast<char *>(buffer),
+        if (flan_object_write(objectHandle, const_cast<char *>(writePointer),
                               subOffset, subSize, FileFlexNVMe::flanh))
         {
             helper::Throw<std::ios_base::failure>(
