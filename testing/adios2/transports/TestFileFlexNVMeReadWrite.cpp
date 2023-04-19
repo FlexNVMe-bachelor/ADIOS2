@@ -123,7 +123,8 @@ TEST_F(ReadWriteTestSuite, CannotReadNonExistentChunkTest)
     transport.Open("helloworld", adios2::Mode::Read);
 
     char *readBuffer = (char *)malloc(m_blockSize);
-    ASSERT_THROW(transport.Read(readBuffer, m_blockSize, 0), std::invalid_argument);
+    ASSERT_THROW(transport.Read(readBuffer, m_blockSize, 0),
+                 std::invalid_argument);
     free(readBuffer);
 }
 
