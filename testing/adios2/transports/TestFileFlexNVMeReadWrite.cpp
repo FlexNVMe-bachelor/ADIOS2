@@ -141,6 +141,35 @@ TEST_F(ReadWriteTestSuite, CanWriteAndReadEmptyDataTest)
     free(buffer);
 }
 
+TEST_F(ReadWriteTestSuite, CanReadChunksWithOffsetAndSubsizeTest)
+{
+    adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
+    transport.SetParameters(GetParams());
+
+    transport.Open("helloworld", adios2::Mode::Write);
+
+    Rng rng;
+    const size_t MIN_NUM_CHUNKS = 1, MAX_NUM_CHUNKS = 32;
+
+    size_t bufferSize = rng.RandRange(MIN_NUM_CHUNKS * m_blockSize,
+                                      MAX_NUM_CHUNKS * m_blockSize);
+
+    size_t readOffset = rng.RandRange(1, bufferSize - 1);
+    size_t readSize = rng.RandRange(1, bufferSize - readOffset);
+
+    std::string data = rng.RandString(bufferSize - 1);
+
+    transport.Write(data.c_str(), bufferSize, 0);
+
+    char *readBuffer = (char *)malloc(readSize + 1);
+    readBuffer[readSize] = '\0';
+    transport.Read(readBuffer, readSize, readOffset);
+    std::string readData(readBuffer);
+    free(readBuffer);
+
+    ASSERT_EQ(data.substr(readOffset, readSize), readData);
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
