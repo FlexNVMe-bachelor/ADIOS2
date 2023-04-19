@@ -115,6 +115,18 @@ TEST_F(ReadWriteTestSuite, CanWriteAndReadMultipleChunksTest)
     ASSERT_EQ(data, readData);
 }
 
+TEST_F(ReadWriteTestSuite, CannotReadNonExistentChunkTest)
+{
+    adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
+    transport.SetParameters(GetParams());
+
+    transport.Open("helloworld", adios2::Mode::Read);
+
+    char *readBuffer = (char *)malloc(m_blockSize);
+    ASSERT_THROW(transport.Read(readBuffer, m_blockSize, 0), std::invalid_argument);
+    free(readBuffer);
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
