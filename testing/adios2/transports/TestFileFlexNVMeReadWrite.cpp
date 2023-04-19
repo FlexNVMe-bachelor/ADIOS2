@@ -68,6 +68,29 @@ public:
     }
 };
 
+TEST_F(ReadWriteTestSuite, CanWriteAndReadSingleChunkTest)
+{
+    adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
+    transport.SetParameters(GetParams());
+
+    transport.Open("helloworld", adios2::Mode::Write);
+
+    Rng rng;
+    size_t bufferSize = rng.RandRange(1, m_blockSize);
+
+    std::string data = rng.RandString(
+        bufferSize - 1, 'a', 'z'); // -1 to have space for null terminator
+
+    transport.Write(data.c_str(), bufferSize, 0);
+
+    char *readBuffer = (char *)malloc(bufferSize);
+    transport.Read(readBuffer, bufferSize, 0);
+    std::string readData(readBuffer);
+    free(readBuffer);
+
+    ASSERT_EQ(data, readData);
+}
+
 TEST_F(ReadWriteTestSuite, CanWriteAndReadMultipleChunksTest)
 {
     adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
@@ -80,8 +103,7 @@ TEST_F(ReadWriteTestSuite, CanWriteAndReadMultipleChunksTest)
     size_t bufferSize = rng.RandRange(MIN_NUM_CHUNKS * m_blockSize,
                                       MAX_NUM_CHUNKS * m_blockSize);
 
-    std::string data =
-        rng.RandString(bufferSize - 1); // -1 to have space for null terminator
+    std::string data = rng.RandString(bufferSize - 1);
 
     transport.Write(data.c_str(), bufferSize, 0);
 
