@@ -29,6 +29,12 @@ class Comm;
 namespace transport
 {
 
+struct ChunkLocation
+{
+    size_t chunkNum;
+    size_t chunkOffset;
+};
+
 /** File descriptor transport using the xNVME IO library */
 class FileFlexNVMe : public Transport
 {
@@ -76,7 +82,7 @@ public:
 
     void MkDir(const std::string &fileName) final;
 
-    std::string CreateChunkName();
+    auto GenerateChunkName(size_t chunkNum) -> std::string;
 
 private:
     std::string m_deviceUrl = "";
@@ -92,7 +98,13 @@ private:
     auto ErrnoErrMsg() const -> std::string;
 
     void InitFlan(const std::string &name);
-    auto OpenFlanObject(std::string &objectName) -> uint64_t;
+    auto NormalisedObjectName(std::string &input) -> std::string;
+    auto OpenFlanObject(std::string &objectName, int flags = FLAN_OPEN_FLAG_READ) -> uint64_t;
+    void CloseFlanObject(uint64_t objectHandle);
+
+    /* Given a overall offset, calculate which chunk that position corresponds
+     * to, and what the offset is within that chunk */
+    auto CalculateChunkLocation(size_t offset) -> ChunkLocation;
 };
 
 } // end namespace transport
