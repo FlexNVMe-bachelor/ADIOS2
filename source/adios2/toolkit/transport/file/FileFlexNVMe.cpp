@@ -164,6 +164,11 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
 
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 {
+    if (size == 0)
+    {
+        return;
+    }
+
     // TODO(adbo): is this ok? do we have to maintain a cursor that leaves off
     // where the previous read ended in this case?
     if (start == MaxSizeT)
@@ -224,6 +229,11 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 
 void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
 {
+    if (size == 0)
+    {
+        return;
+    }
+
     ChunkLocation startLoc = CalculateChunkLocation(start);
     ChunkLocation endLoc = CalculateChunkLocation(start + size);
 

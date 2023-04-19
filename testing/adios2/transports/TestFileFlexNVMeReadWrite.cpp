@@ -127,6 +127,20 @@ TEST_F(ReadWriteTestSuite, CannotReadNonExistentChunkTest)
     free(readBuffer);
 }
 
+TEST_F(ReadWriteTestSuite, CanWriteAndReadEmptyDataTest)
+{
+    adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
+    transport.SetParameters(GetParams());
+
+    transport.Open("helloworld", adios2::Mode::Write);
+
+    Rng rng;
+    char *buffer = (char *)malloc(m_blockSize);
+    ASSERT_NO_THROW(transport.Write(buffer, 0, 0));
+    ASSERT_NO_THROW(transport.Read(buffer, 0, 0));
+    free(buffer);
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
