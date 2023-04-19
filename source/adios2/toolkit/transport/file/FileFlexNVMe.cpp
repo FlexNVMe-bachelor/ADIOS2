@@ -95,7 +95,7 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
 
     // TODO(adbo): more open modes?
     default:
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "Open",
             "unknown open mode for file " + m_Name +
                 " in call to FlexNVMe open");
@@ -139,12 +139,12 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
 
         if (errno == 22)
         {
-            helper::Throw<std::ios_base::failure>(
+            helper::Throw<std::runtime_error>(
                 "Toolkit", "transport::file::FileFlexNVMe", "Open",
                 err + ". You may need to mkfs.flexalloc the storage device.");
         }
 
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::runtime_error>(
             "Toolkit", "transport::file::FileFlexNVMe", "Open", err);
     }
 }
@@ -203,7 +203,7 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
         if (flan_object_write(objectHandle, const_cast<char *>(writePointer),
                               subOffset, subSize, FileFlexNVMe::flanh))
         {
-            helper::Throw<std::ios_base::failure>(
+            helper::Throw<std::runtime_error>(
                 "Toolkit", "transport::file::FileFlexNVMe", "Write",
                 "Failed to write chunk " + objectName);
         }
@@ -258,7 +258,7 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
 
         if (numBytesRead < subSize)
         {
-            helper::Throw<std::ios_base::failure>(
+            helper::Throw<std::range_error>(
                 "Toolkit", "transport::file::FileFlexNVMe", "Read",
                 "Failed to read '" + m_Name +
                     "' because more bytes were requested than were stored");
@@ -273,7 +273,7 @@ size_t FileFlexNVMe::GetSize()
 {
     if (FileFlexNVMe::flanh == nullptr)
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::logic_error>(
             "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
             "GetSize called before Open");
     }
@@ -292,7 +292,7 @@ size_t FileFlexNVMe::GetSize()
 
     if (chunkNum == 0)
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
             "Object '" + m_Name + "' not found");
     }
@@ -359,7 +359,7 @@ auto FileFlexNVMe::OpenFlanObject(std::string &objectName, int flags)
     if (flan_object_open(objectName.c_str(), FileFlexNVMe::flanh, &objectHandle,
                          flags))
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "OpenChunk",
             "Failed to open object " + objectName);
     }
@@ -370,7 +370,7 @@ void FileFlexNVMe::CloseFlanObject(uint64_t objectHandle)
 {
     if (flan_object_close(objectHandle, FileFlexNVMe::flanh))
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::runtime_error>(
             "Toolkit", "transport::file::FileFlexNVMe", "CloseChunk",
             "Failed to close chunk object");
     }
