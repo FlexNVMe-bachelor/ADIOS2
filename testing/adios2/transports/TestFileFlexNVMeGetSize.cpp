@@ -30,9 +30,36 @@ TEST_F(GetSizeTestSuite, CanGetSizeOfSingleChunkTest)
 
     transport.Write(data.c_str(), dataSize, 0);
 
-    size_t size = transport.GetSize();
+    ASSERT_EQ(dataSize, transport.GetSize());
+}
 
-    ASSERT_EQ(size, dataSize);
+TEST_F(GetSizeTestSuite, CanGetSizeOfMultipleChunksTest)
+{
+    adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
+    transport.SetParameters(GetParams());
+
+    transport.Open("helloworld", adios2::Mode::Write);
+
+    Rng rng;
+    const size_t MIN_NUM_CHUNKS = 1, MAX_NUM_CHUNKS = 32;
+    size_t dataSize = rng.RandRange(MIN_NUM_CHUNKS * m_blockSize,
+                                    MAX_NUM_CHUNKS * m_blockSize);
+
+    std::string data = rng.RandString(dataSize - 1);
+
+    transport.Write(data.c_str(), dataSize, 0);
+
+    ASSERT_EQ(dataSize, transport.GetSize());
+}
+
+TEST_F(GetSizeTestSuite, CanGetSizeOfNonExistentObjectTest)
+{
+    adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
+    transport.SetParameters(GetParams());
+
+    transport.Open("helloworld", adios2::Mode::Read);
+
+    ASSERT_EQ(0, transport.GetSize());
 }
 
 int main(int argc, char **argv)
