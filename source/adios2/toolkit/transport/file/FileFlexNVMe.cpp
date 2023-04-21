@@ -303,11 +303,12 @@ size_t FileFlexNVMe::GetSize()
     size_t totalSize = 0;
 
     // TODO(adbo): extract to function like GetChunkInfo(chunkName)
-    while ((objectInfo = flan_find_oinfo(FileFlexNVMe::flanh,
-                                         GenerateChunkName(chunkNum++).c_str(),
-                                         nullptr)))
+    while ((objectInfo =
+                flan_find_oinfo(FileFlexNVMe::flanh,
+                                GenerateChunkName(chunkNum).c_str(), nullptr)))
     {
         totalSize += objectInfo->size;
+        chunkNum++;
     }
 
     if (chunkNum == 0)

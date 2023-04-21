@@ -52,14 +52,14 @@ TEST_F(GetSizeTestSuite, CanGetSizeOfMultipleChunksTest)
     ASSERT_EQ(dataSize, transport.GetSize());
 }
 
-TEST_F(GetSizeTestSuite, CanGetSizeOfNonExistentObjectTest)
+TEST_F(GetSizeTestSuite, CannotGetSizeOfNonExistentObjectTest)
 {
     adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
     transport.SetParameters(GetParams());
 
     transport.Open("helloworld", adios2::Mode::Read);
 
-    ASSERT_EQ(0, transport.GetSize());
+    ASSERT_THROW(transport.GetSize(), std::invalid_argument);
 }
 
 TEST_F(GetSizeTestSuite, CanGetSizeOfFullChunksTest)
