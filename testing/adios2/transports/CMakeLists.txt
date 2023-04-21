@@ -24,5 +24,6 @@ if(ADIOS2_HAVE_FLAN AND ADIOS2_HAVE_FLEXALLOC)
   gtest_add_flexnvme_test(Open)
   gtest_add_flexnvme_test(Parameters)
   gtest_add_flexnvme_test(ReadWrite)
+  gtest_add_flexnvme_test(GetSize)
 endif()
 
