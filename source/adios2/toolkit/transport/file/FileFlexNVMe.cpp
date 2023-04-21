@@ -200,6 +200,11 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
             subSize = endLoc.chunkOffset - subOffset;
         }
 
+        if (subSize == 0)
+        {
+            break;
+        }
+
         std::string objectName = GenerateChunkName(curChunk);
 
         uint64_t objectHandle = OpenFlanObject(
@@ -256,6 +261,11 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
         if (curChunk == endLoc.chunkNum)
         {
             subSize = endLoc.chunkOffset - subOffset;
+        }
+
+        if (subSize == 0)
+        {
+            break;
         }
 
         std::string objectName = GenerateChunkName(curChunk);
