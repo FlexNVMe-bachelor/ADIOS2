@@ -25,10 +25,11 @@ if((NOT FLEXALLOC_ROOT) AND (NOT (ENV{FLEXALLOC_ROOT} STREQUAL "")))
   set(FLEXALLOC_ROOT "$ENV{FLEXALLOC_ROOT}")
 endif()
 
+set(FLEXALLOC_LIB_DIR ${FLEXALLOC_ROOT}/usr/local/lib/x86_64-linux-gnu)
 if(FLEXALLOC_ROOT)
   # This is the behavior of meson install with custom install directory
   set(FLEXALLOC_INCLUDE_OPTS HINTS ${FLEXALLOC_ROOT} ${FLEXALLOC_ROOT}/usr/local/include)
-  set(FLEXALLOC_LIBRARY_OPTS HINTS ${FLEXALLOC_ROOT} ${FLEXALLOC_ROOT}/usr/local/lib/x86_64-linux-gnu)
+  set(FLEXALLOC_LIBRARY_OPTS HINTS ${FLEXALLOC_ROOT} ${FLEXALLOC_LIB_DIR})
 endif()
 
 find_path(
@@ -45,8 +46,25 @@ find_package_handle_standard_args(flexalloc
 )
 
 if(FLEXALLOC_FOUND)
-  set(FLEXALLOC_INCLUDE_DIR ${FLEXALLOC_INCLUDE_DIR})
-  set(FLEXALLOC_LIBRARY ${FLEXALLOC_LIBRARY})
+  set(target flan::flexalloc)
+  if(NOT TARGET ${target})
+    add_library(${target} SHARED IMPORTED)
+    if(FLEXALLOC_INCLUDE_DIR)
+      set_target_properties(${target} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${FLEXALLOC_INCLUDE_DIR}")
+    endif()
+
+    if(FLEXALLOC_LIBRARY)
+      set_target_properties(${target} PROPERTIES
+        IMPORTED_LOCATION "${FLEXALLOC_LIBRARY}"
+        IMPORTED_LINK_INTERFACE_LIBRARIES flan::xnme
+        INTERFACE_LINK_DIRECTORIES "${FLEXALLOC_LIB_DIR}"
+      )
+    endif()
+    #    target_link_libraries(${target} INTERFACE flan::xnvme)
+  endif()
+
+  target_link_libraries(${target} PUBLIC INTERFACE flan::xnvme)
+	
   message(STATUS "FLEXALLOC library \"${FLEXALLOC_LIBRARY}\"")
   message(STATUS "FLEXALLOC include \"${FLEXALLOC_INCLUDE_DIR}\"")
 endif()
