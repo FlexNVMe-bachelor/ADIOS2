@@ -126,6 +126,72 @@ TEST_F(FileFlexNVMeFilePOSIXMatchTestSuite,
         std::make_pair(flexnvmeResult.second.length(), flexnvmeResult.second));
 }
 
+TEST_F(FileFlexNVMeFilePOSIXMatchTestSuite,
+       SingleWriteAndMultipleReadYieldsTheSame)
+{
+    Rng rng;
+
+    adios2::transport::FilePOSIX posix(adios2::helper::CommDummy());
+    adios2::transport::FileFlexNVMe flexnvme(adios2::helper::CommDummy());
+    flexnvme.SetParameters(GetParams());
+
+    std::string name = rng.RandString(24, 'a', 'z');
+
+    const size_t NUM_READS = 4;
+    size_t bufferSize = rng.RandRange(NUM_READS * 3, 3 * m_blockSize);
+    std::string writeData = rng.RandString(bufferSize - 1);
+
+    std::array<size_t, NUM_READS> batchSizes{};
+    size_t sizeLeft = bufferSize;
+
+    for (int i = 0; i < NUM_READS; i++)
+    {
+        if (i == NUM_READS - 1)
+        {
+            batchSizes[i] = sizeLeft;
+            break;
+        }
+
+        size_t subSize = rng.RandRange(1, sizeLeft - 2);
+        batchSizes[i] = subSize;
+        sizeLeft -= subSize;
+    }
+
+    auto performTestOnTransport = [&](adios2::Transport &transport) {
+        transport.Open(name, adios2::Mode::Write);
+        transport.Write(writeData.c_str(), bufferSize, adios2::MaxSizeT);
+        transport.Close();
+
+        transport.Open(name, adios2::Mode::Read);
+
+        std::vector<std::tuple<size_t, size_t, std::string>> batchResults;
+        for (auto batchSize : batchSizes)
+        {
+            char *readBuffer = (char *)malloc(batchSize + 1);
+            readBuffer[batchSize] = '\0';
+
+            size_t size = transport.GetSize();
+            transport.Read(readBuffer, batchSize, adios2::MaxSizeT);
+
+            std::string readData(readBuffer);
+            free(readBuffer);
+
+            auto batchResult =
+                std::make_tuple(size, readData.length(), readData);
+            batchResults.push_back(batchResult);
+        }
+
+        transport.Close();
+
+        return batchResults;
+    };
+
+    auto posixResult = performTestOnTransport(posix);
+    auto flexnvmeResult = performTestOnTransport(flexnvme);
+
+    ASSERT_EQ(posixResult, flexnvmeResult);
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
