@@ -86,6 +86,7 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
     m_Name = name;
     m_OpenMode = openMode;
     m_baseName = NormalisedObjectName(const_cast<std::string &>(name));
+    m_Cursor = 0;
 
     switch (m_OpenMode)
     {
@@ -169,11 +170,13 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
         return;
     }
 
-    // TODO(adbo): is this ok? do we have to maintain a cursor that leaves off
-    // where the previous read ended in this case?
     if (start == MaxSizeT)
     {
-        start = 0;
+        start = m_Cursor;
+    }
+    else
+    {
+        m_Cursor = start;
     }
 
     ChunkLocation startLoc = CalculateChunkLocation(start);
@@ -223,6 +226,8 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
         curChunk++;
         writePointer += subSize;
     }
+
+    m_Cursor += size;
 }
 
 #ifdef REALLY_WANT_WRITEV
@@ -237,6 +242,15 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
     if (size == 0)
     {
         return;
+    }
+
+    if (start == MaxSizeT)
+    {
+        start = m_Cursor;
+    }
+    else
+    {
+        m_Cursor = start;
     }
 
     ChunkLocation startLoc = CalculateChunkLocation(start);
@@ -287,6 +301,8 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
         curChunk++;
         readPointer += subSize;
     }
+
+    m_Cursor += size;
 }
 
 size_t FileFlexNVMe::GetSize()
@@ -332,15 +348,26 @@ void FileFlexNVMe::Close()
     }
 
     m_IsOpen = false;
+    m_Cursor = 0;
 }
 
 void FileFlexNVMe::Delete() {}
 
-void FileFlexNVMe::SeekToEnd() {}
+void FileFlexNVMe::SeekToEnd() { m_Cursor = GetSize(); }
 
-void FileFlexNVMe::SeekToBegin() {}
+void FileFlexNVMe::SeekToBegin() { m_Cursor = 0; }
 
-void FileFlexNVMe::Seek(const size_t start) {}
+void FileFlexNVMe::Seek(const size_t start)
+{
+    if (start != MaxSizeT)
+    {
+        m_Cursor = start;
+    }
+    else
+    {
+        SeekToEnd();
+    }
+}
 
 void FileFlexNVMe::Truncate(const size_t length) {}
 
