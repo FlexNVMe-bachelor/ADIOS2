@@ -454,6 +454,13 @@ endif()
 
 # flan
 if(ADIOS2_USE_FLAN AND UNIX)
+  find_package(xnvme)
+  message(STATUS "xnvme found: \"${XNVME_FOUND}\"")
+  if(XNVME_FOUND)
+    set(ADIOS2_HAVE_XVNME TRUE)
+    message(STATUS "xnvme have: \"${ADIOS2_HAVE_XNVME}\"")
+  endif()
+
 	find_package(flan)
 	if(FLAN_FOUND)
 		set(ADIOS2_HAVE_FLAN TRUE)
@@ -465,6 +472,7 @@ if(ADIOS2_USE_FLAN AND UNIX)
     set(ADIOS2_HAVE_FLEXALLOC TRUE)
     message(STATUS "Flexalloc have: \"${ADIOS2_HAVE_FLEXALLOC}\"")
   endif()
+
 endif()
 
 #SysV IPC

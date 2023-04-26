@@ -25,9 +25,10 @@ if((NOT FLAN_ROOT) AND (NOT (ENV{FLAN_ROOT} STREQUAL "")))
   set(FLAN_ROOT "$ENV{FLAN_ROOT}")
 endif()
 
+set(FLAN_LIB_DIR ${FLAN_ROOT}/usr/local/lib/x86_64-linux-gnu)
 if(FLAN_ROOT)
   set(FLAN_INCLUDE_OPTS HINTS ${FLAN_ROOT} ${FLAN_ROOT}/usr/local/include)
-  set(FLAN_LIBRARY_OPTS HINTS ${FLAN_ROOT} ${FLAN_ROOT}/usr/local/lib/x86_64-linux-gnu)
+  set(FLAN_LIBRARY_OPTS HINTS ${FLAN_ROOT} ${FLAN_LIB_DIR})
 endif()
 
 find_path(FLAN_INCLUDE_DIR flan.h ${FLAN_INCLUDE_OPTS})
@@ -40,7 +41,23 @@ find_package_handle_standard_args(flan
 )
 
 if(FLAN_FOUND)
-  set(FLAN_INCLUDE_DIR ${FLAN_INCLUDE_DIR})
-  set(FLAN_LIBRARY ${FLAN_LIBRARY})
+  set(target flan::flan)
+  if(NOT TARGET ${target})
+    add_library(${target} SHARED IMPORTED)
+    if(FLAN_INCLUDE_DIR)
+      set_target_properties(${target} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${FLAN_INCLUDE_DIR}")
+    endif()
+
+    if(FLAN_LIBRARY)
+      set_target_properties(${target} PROPERTIES
+        IMPORTED_LOCATION "${FLAN_LIBRARY}"
+        IMPORTED_LINK_INTERFACE_LIBRARIES flan::xnme
+        INTERFACE_LINK_DIRECTORIES "${FLAN_LIB_DIR}"
+      )
+    endif()
+
+    target_link_libraries(${target} PUBLIC INTERFACE flan::xnvme)
+  endif()
+	
   message(STATUS "flan library \"${FLAN_LIBRARY}\"")
 endif()
