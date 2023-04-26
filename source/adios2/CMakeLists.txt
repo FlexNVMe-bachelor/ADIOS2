@@ -167,7 +167,9 @@ endif()
 
 if(ADIOS2_HAVE_FLAN)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileFlexNVMe.cpp)
-  target_link_libraries(adios2_core PRIVATE flan)
+  target_link_libraries(adios2_core PUBLIC flan::xnvme)
+  target_link_libraries(adios2_core PUBLIC flan::flexalloc)
+  target_link_libraries(adios2_core PUBLIC flan::flan)
 endif()
 
 if(ADIOS2_HAVE_AWSSDK)

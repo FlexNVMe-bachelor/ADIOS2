@@ -14,8 +14,7 @@ function(gtest_add_flexnvme_test testname)
     message(STATUS "Making target ${target}")
     add_executable(${target} TestFileFlexNVMe${testname}.cpp disk/Loopback.cpp disk/BackingFile.cpp disk/mkfs.cpp disk/DiskTestClass.cpp)
 
-    target_include_directories(${target} PRIVATE ${FLEXALLOC_INCLUDE_DIR})
-    target_link_libraries(${target} flexalloc adios2::cxx11 adios2_core adios2::thirdparty::gtest stdc++fs)
+    target_link_libraries(${target} adios2::cxx11 adios2_core adios2::thirdparty::gtest stdc++fs)
   endif()
 endfunction()
 
