@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdlib>
 #include <gtest/gtest.h>
 
@@ -178,6 +179,101 @@ TEST_F(FileFlexNVMeFilePOSIXMatchTestSuite,
 
             auto batchResult =
                 std::make_tuple(size, readData.length(), readData);
+            batchResults.push_back(batchResult);
+        }
+
+        transport.Close();
+
+        return batchResults;
+    };
+
+    auto posixResult = performTestOnTransport(posix);
+    auto flexnvmeResult = performTestOnTransport(flexnvme);
+
+    ASSERT_EQ(posixResult, flexnvmeResult);
+}
+
+TEST_F(FileFlexNVMeFilePOSIXMatchTestSuite, RandomWriteReadsYieldsTheSame)
+{
+    Rng rng;
+
+    adios2::transport::FilePOSIX posix(adios2::helper::CommDummy());
+    adios2::transport::FileFlexNVMe flexnvme(adios2::helper::CommDummy());
+    flexnvme.SetParameters(GetParams());
+
+    std::string name = rng.RandString(24, 'a', 'z');
+
+    const size_t MAX_BLOCKS = 24, MAX_NUM_ACTIONS = 1000;
+    const size_t numActions = rng.RandRange(5, MAX_NUM_ACTIONS);
+    const size_t bufferSize =
+        rng.RandRange(numActions * 2, MAX_BLOCKS * m_blockSize);
+    const std::string writeData = rng.RandString(bufferSize - 1);
+
+    std::vector<std::pair<size_t, size_t>> batches{};
+
+    size_t sizeLeft = bufferSize;
+
+    for (int i = 0; i < numActions; i++)
+    {
+        bool shouldSpecifyOffset = rng.RandRange(1, 4) == 1;
+        size_t offset = shouldSpecifyOffset ? rng.RandRange(0, bufferSize / 2)
+                                            : adios2::MaxSizeT;
+
+        if (i == numActions - 1)
+        {
+            batches.emplace_back(sizeLeft, offset);
+            break;
+        }
+
+        size_t subSize = rng.RandRange(0, bufferSize / numActions);
+
+        batches.emplace_back(subSize, offset);
+
+        sizeLeft -= subSize;
+    }
+
+    auto performTestOnTransport = [&](adios2::Transport &transport) {
+        transport.Open(name, adios2::Mode::Write);
+
+        size_t startIndex = 0;
+        for (auto batch : batches)
+        {
+            size_t batchSize = batch.first, batchOffset = batch.second;
+            startIndex =
+                batchOffset == adios2::MaxSizeT ? startIndex : batchOffset;
+
+            std::string batchWriteData =
+                writeData.substr(startIndex, batchSize);
+
+            transport.Write(batchWriteData.c_str(), batchSize, batchOffset);
+
+            startIndex += batchSize;
+        }
+
+        transport.Close();
+
+        transport.Open(name, adios2::Mode::Read);
+
+        std::vector<
+            std::tuple<std::pair<size_t, size_t>, size_t, size_t, std::string>>
+            batchResults;
+        for (auto batch : batches)
+        {
+            size_t batchSize = batch.first, batchOffset = batch.second;
+
+            char *readBuffer = (char *)malloc(batchSize + 1);
+            readBuffer[batchSize] = '\0';
+
+            size_t size = transport.GetSize();
+            transport.Read(readBuffer, batchSize, batchOffset);
+
+            std::string readData(readBuffer);
+            free(readBuffer);
+
+            auto batchResult =
+                std::make_tuple(std::make_pair(batchSize, batchOffset), size,
+                                readData.length(), readData);
+
             batchResults.push_back(batchResult);
         }
 
