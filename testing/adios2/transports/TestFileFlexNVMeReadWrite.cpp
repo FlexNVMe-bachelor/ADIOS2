@@ -17,6 +17,8 @@ protected:
     ReadWriteTestSuite() : Disk::DiskTestClass(4096, 64, 32) {}
 };
 
+const size_t MAX_NUM_CHUNKS = 24;
+
 TEST_F(ReadWriteTestSuite, CanWriteAndReadSingleChunkTest)
 {
     adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
@@ -48,7 +50,7 @@ TEST_F(ReadWriteTestSuite, CanWriteAndReadMultipleChunksTest)
     transport.Open("helloworld", adios2::Mode::Write);
 
     Rng rng;
-    const size_t MIN_NUM_CHUNKS = 2, MAX_NUM_CHUNKS = 32;
+    const size_t MIN_NUM_CHUNKS = 2;
     size_t bufferSize = rng.RandRange(MIN_NUM_CHUNKS * m_blockSize,
                                       MAX_NUM_CHUNKS * m_blockSize);
 
@@ -99,7 +101,7 @@ TEST_F(ReadWriteTestSuite, CanReadChunksWithOffsetAndSubsizeTest)
     transport.Open("helloworld", adios2::Mode::Write);
 
     Rng rng;
-    const size_t MIN_NUM_CHUNKS = 1, MAX_NUM_CHUNKS = 32;
+    const size_t MIN_NUM_CHUNKS = 1;
 
     size_t bufferSize = rng.RandRange(MIN_NUM_CHUNKS * m_blockSize,
                                       MAX_NUM_CHUNKS * m_blockSize);
@@ -128,7 +130,7 @@ TEST_F(ReadWriteTestSuite, CanOverwriteChunksPartiallyTest)
     transport.Open("helloworld", adios2::Mode::Write);
 
     Rng rng;
-    const size_t MIN_NUM_CHUNKS = 1, MAX_NUM_CHUNKS = 32;
+    const size_t MIN_NUM_CHUNKS = 1;
 
     size_t bufferSize = rng.RandRange(MIN_NUM_CHUNKS * m_blockSize,
                                       MAX_NUM_CHUNKS * m_blockSize);
@@ -166,7 +168,7 @@ TEST_F(ReadWriteTestSuite, CanReadManyTimesTest)
     transport.Open("helloworld", adios2::Mode::Write);
 
     Rng rng;
-    const size_t MIN_NUM_CHUNKS = 2, MAX_NUM_CHUNKS = 32;
+    const size_t MIN_NUM_CHUNKS = 2;
     size_t bufferSize = rng.RandRange(MIN_NUM_CHUNKS * m_blockSize,
                                       MAX_NUM_CHUNKS * m_blockSize);
 

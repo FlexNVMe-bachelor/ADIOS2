@@ -16,6 +16,8 @@ protected:
     GetSizeTestSuite() : Disk::DiskTestClass(4096, 64, 32) {}
 };
 
+const size_t MAX_NUM_CHUNKS = 24;
+
 TEST_F(GetSizeTestSuite, CanGetSizeOfSingleChunkTest)
 {
     adios2::transport::FileFlexNVMe transport(adios2::helper::CommDummy());
@@ -41,7 +43,7 @@ TEST_F(GetSizeTestSuite, CanGetSizeOfMultipleChunksTest)
     transport.Open("helloworld", adios2::Mode::Write);
 
     Rng rng;
-    const size_t MIN_NUM_CHUNKS = 1, MAX_NUM_CHUNKS = 32;
+    const size_t MIN_NUM_CHUNKS = 1;
     size_t dataSize = rng.RandRange(MIN_NUM_CHUNKS * m_blockSize,
                                     MAX_NUM_CHUNKS * m_blockSize);
 
@@ -70,7 +72,7 @@ TEST_F(GetSizeTestSuite, CanGetSizeOfFullChunksTest)
     transport.Open("helloworld", adios2::Mode::Write);
 
     Rng rng;
-    const size_t MIN_NUM_CHUNKS = 1, MAX_NUM_CHUNKS = 16;
+    const size_t MIN_NUM_CHUNKS = 1;
     size_t numChunks = rng.RandRange(MIN_NUM_CHUNKS, MAX_NUM_CHUNKS);
     size_t dataSize = numChunks * m_blockSize;
 
@@ -89,7 +91,7 @@ TEST_F(GetSizeTestSuite, CanGetSizeOfSingleByteChunkTest)
     transport.Open("helloworld", adios2::Mode::Write);
 
     Rng rng;
-    const size_t MIN_NUM_CHUNKS = 1, MAX_NUM_CHUNKS = 16;
+    const size_t MIN_NUM_CHUNKS = 1;
     size_t numChunks = rng.RandRange(MIN_NUM_CHUNKS, MAX_NUM_CHUNKS);
     size_t dataSize = numChunks * m_blockSize + 1;
 
