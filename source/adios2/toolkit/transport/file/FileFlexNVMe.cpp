@@ -165,11 +165,6 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
 
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 {
-    if (size == 0)
-    {
-        return;
-    }
-
     if (start == MaxSizeT)
     {
         start = m_Cursor;
@@ -177,6 +172,11 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
     else
     {
         m_Cursor = start;
+    }
+
+    if (size == 0)
+    {
+        return;
     }
 
     ChunkLocation startLoc = CalculateChunkLocation(start);
@@ -239,11 +239,6 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 
 void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
 {
-    if (size == 0)
-    {
-        return;
-    }
-
     if (start == MaxSizeT)
     {
         start = m_Cursor;
@@ -251,6 +246,11 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
     else
     {
         m_Cursor = start;
+    }
+
+    if (size == 0)
+    {
+        return;
     }
 
     ChunkLocation startLoc = CalculateChunkLocation(start);
