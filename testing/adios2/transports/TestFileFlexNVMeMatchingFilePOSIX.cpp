@@ -207,11 +207,14 @@ TEST_F(FileFlexNVMeFilePOSIXMatchTestSuite, RandomWriteReadsYieldsTheSame)
     const size_t numActions = rng.RandRange(5, MAX_NUM_ACTIONS);
     const size_t bufferSize =
         rng.RandRange(numActions * 2, MAX_BLOCKS * m_blockSize);
+
     const std::string writeData = rng.RandString(bufferSize - 1);
 
-    std::vector<std::pair<size_t, size_t>> batches{};
+    std::vector<std::vector<std::pair<size_t, size_t>>> batches{};
 
     size_t sizeLeft = bufferSize;
+
+    std::vector<std::pair<size_t, size_t>> curBatch;
 
     for (int i = 0; i < numActions; i++)
     {
@@ -219,26 +222,41 @@ TEST_F(FileFlexNVMeFilePOSIXMatchTestSuite, RandomWriteReadsYieldsTheSame)
         size_t offset = shouldSpecifyOffset ? rng.RandRange(0, bufferSize / 2)
                                             : adios2::MaxSizeT;
 
+        if (shouldSpecifyOffset && !curBatch.empty())
+        {
+            batches.push_back(curBatch);
+            std::vector<std::pair<size_t, size_t>> newBatch;
+            curBatch = newBatch;
+        }
+
         if (i == numActions - 1)
         {
-            batches.emplace_back(sizeLeft, offset);
+            curBatch.emplace_back(sizeLeft, offset);
+            batches.push_back(curBatch);
             break;
         }
 
         size_t subSize = rng.RandRange(0, bufferSize / numActions);
 
-        batches.emplace_back(subSize, offset);
+        curBatch.emplace_back(subSize, offset);
 
         sizeLeft -= subSize;
     }
 
-    auto performTestOnTransport = [&](adios2::Transport &transport) {
+    auto runBatchOnTransport = [&](const std::vector<std::pair<size_t, size_t>>
+                                       &batch,
+                                   adios2::Transport &transport) {
+        std::vector<
+            std::tuple<std::pair<size_t, size_t>, size_t, size_t, std::string>>
+            batchResults;
+
         transport.Open(name, adios2::Mode::Write);
 
         size_t startIndex = 0;
-        for (auto batch : batches)
+        size_t writtenSize = 0;
+        for (auto batchItem : batch)
         {
-            size_t batchSize = batch.first, batchOffset = batch.second;
+            size_t batchSize = batchItem.first, batchOffset = batchItem.second;
             startIndex =
                 batchOffset == adios2::MaxSizeT ? startIndex : batchOffset;
 
@@ -248,31 +266,30 @@ TEST_F(FileFlexNVMeFilePOSIXMatchTestSuite, RandomWriteReadsYieldsTheSame)
             transport.Write(batchWriteData.c_str(), batchSize, batchOffset);
 
             startIndex += batchSize;
+            writtenSize += batchSize;
         }
 
         transport.Close();
 
         transport.Open(name, adios2::Mode::Read);
 
-        std::vector<
-            std::tuple<std::pair<size_t, size_t>, size_t, size_t, std::string>>
-            batchResults;
-        for (auto batch : batches)
+        for (auto batchItem : batch)
         {
-            size_t batchSize = batch.first, batchOffset = batch.second;
+            size_t batchSize = batchItem.first, batchOffset = batchItem.second;
 
             char *readBuffer = (char *)malloc(batchSize + 1);
             readBuffer[batchSize] = '\0';
 
             size_t size = transport.GetSize();
+
             transport.Read(readBuffer, batchSize, batchOffset);
 
             std::string readData(readBuffer);
             free(readBuffer);
 
             auto batchResult =
-                std::make_tuple(std::make_pair(batchSize, batchOffset), size,
-                                readData.length(), readData);
+                std::make_tuple(std::make_pair(batchSize, batchOffset),
+                                batchSize, readData.length(), readData);
 
             batchResults.push_back(batchResult);
         }
@@ -282,10 +299,14 @@ TEST_F(FileFlexNVMeFilePOSIXMatchTestSuite, RandomWriteReadsYieldsTheSame)
         return batchResults;
     };
 
-    auto posixResult = performTestOnTransport(posix);
-    auto flexnvmeResult = performTestOnTransport(flexnvme);
+    for (const auto &batch : batches)
+    {
+        auto posixResult = runBatchOnTransport(batch, posix);
+        auto flexnvmeResult = runBatchOnTransport(batch, flexnvme);
 
-    ASSERT_EQ(posixResult, flexnvmeResult);
+        ASSERT_EQ(posixResult.size(), flexnvmeResult.size());
+        ASSERT_EQ(posixResult, flexnvmeResult);
+    }
 }
 
 int main(int argc, char **argv)
