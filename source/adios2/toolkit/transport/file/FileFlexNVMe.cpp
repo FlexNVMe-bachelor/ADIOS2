@@ -160,7 +160,7 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
                              const helper::Comm &chainComm, const bool async,
                              const bool directio)
 {
-  Open(name, openMode, async, directio);
+    Open(name, openMode, async, directio);
 }
 
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
@@ -306,7 +306,8 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
 }
 
 // TODO: If there is a gap in chunks, the reported size is incorrect
-// TODO: If the chunk 0 is missing but data has been written to a non-zero chunk, a not-found exception is thrown
+// TODO: If the chunk 0 is missing but data has been written to a non-zero
+// chunk, a not-found exception is thrown
 size_t FileFlexNVMe::GetSize()
 {
     if (FileFlexNVMe::flanh == nullptr)
