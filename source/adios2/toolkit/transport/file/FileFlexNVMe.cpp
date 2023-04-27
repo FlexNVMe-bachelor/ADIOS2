@@ -305,6 +305,8 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
     m_Cursor += size;
 }
 
+// TODO: If there is a gap in chunks, the reported size is incorrect
+// TODO: If the chunk 0 is missing but data has been written to a non-zero chunk, a not-found exception is thrown
 size_t FileFlexNVMe::GetSize()
 {
     if (FileFlexNVMe::flanh == nullptr)
