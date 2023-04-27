@@ -160,7 +160,7 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
                              const helper::Comm &chainComm, const bool async,
                              const bool directio)
 {
-    m_baseName = name;
+  Open(name, openMode, async, directio);
 }
 
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
