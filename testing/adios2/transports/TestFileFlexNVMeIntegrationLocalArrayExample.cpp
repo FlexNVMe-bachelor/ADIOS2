@@ -196,6 +196,7 @@ steps_dataset localArrayRead(const adios2::Params &flexnvmeParams)
     adios2::IO io = adios.DeclareIO("Input");
 
     io.AddTransport("File", flexnvmeParams);
+    io.SetEngine("BP5");
 
     adios2::Engine reader = io.Open("localArray.bp", adios2::Mode::Read);
 
