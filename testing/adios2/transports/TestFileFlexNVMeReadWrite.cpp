@@ -141,7 +141,7 @@ TEST_F(ReadWriteTestSuite, CanOverwriteChunksPartiallyTest)
 
     size_t writeOffset = rng.RandRange(1, bufferSize - 1);
     size_t writeSize = rng.RandRange(1, bufferSize - writeOffset);
-    std::string newData = rng.RandString(writeSize - 1);
+    std::string newData = rng.RandString(writeSize);
 
     transport.Write(newData.c_str(), writeSize, writeOffset);
 
