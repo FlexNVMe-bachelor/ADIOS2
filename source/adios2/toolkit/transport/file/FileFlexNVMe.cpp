@@ -86,6 +86,7 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
     m_Name = name;
     m_OpenMode = openMode;
     m_baseName = NormalisedObjectName(const_cast<std::string &>(name));
+    m_Cursor = 0;
 
     switch (m_OpenMode)
     {
@@ -95,7 +96,7 @@ void FileFlexNVMe::Open(const std::string &name, const Mode openMode,
 
     // TODO(adbo): more open modes?
     default:
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "Open",
             "unknown open mode for file " + m_Name +
                 " in call to FlexNVMe open");
@@ -139,12 +140,12 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
 
         if (errno == 22)
         {
-            helper::Throw<std::ios_base::failure>(
+            helper::Throw<std::runtime_error>(
                 "Toolkit", "transport::file::FileFlexNVMe", "Open",
                 err + ". You may need to mkfs.flexalloc the storage device.");
         }
 
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::runtime_error>(
             "Toolkit", "transport::file::FileFlexNVMe", "Open", err);
     }
 }
@@ -159,16 +160,23 @@ void FileFlexNVMe::OpenChain(const std::string &name, Mode openMode,
                              const helper::Comm &chainComm, const bool async,
                              const bool directio)
 {
-    m_baseName = name;
+    Open(name, openMode, async, directio);
 }
 
 void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
 {
-    // TODO(adbo): is this ok? do we have to maintain a cursor that leaves off
-    // where the previous read ended in this case?
     if (start == MaxSizeT)
     {
-        start = 0;
+        start = m_Cursor;
+    }
+    else
+    {
+        m_Cursor = start;
+    }
+
+    if (size == 0)
+    {
+        return;
     }
 
     ChunkLocation startLoc = CalculateChunkLocation(start);
@@ -195,6 +203,11 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
             subSize = endLoc.chunkOffset - subOffset;
         }
 
+        if (subSize == 0)
+        {
+            break;
+        }
+
         std::string objectName = GenerateChunkName(curChunk);
 
         uint64_t objectHandle = OpenFlanObject(
@@ -203,7 +216,7 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
         if (flan_object_write(objectHandle, const_cast<char *>(writePointer),
                               subOffset, subSize, FileFlexNVMe::flanh))
         {
-            helper::Throw<std::ios_base::failure>(
+            helper::Throw<std::runtime_error>(
                 "Toolkit", "transport::file::FileFlexNVMe", "Write",
                 "Failed to write chunk " + objectName);
         }
@@ -213,6 +226,8 @@ void FileFlexNVMe::Write(const char *buffer, size_t size, size_t start)
         curChunk++;
         writePointer += subSize;
     }
+
+    m_Cursor += size;
 }
 
 #ifdef REALLY_WANT_WRITEV
@@ -224,6 +239,20 @@ void FileFlexNVMe::WriteV(const core::iovec *iov, const int iovcnt,
 
 void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
 {
+    if (start == MaxSizeT)
+    {
+        start = m_Cursor;
+    }
+    else
+    {
+        m_Cursor = start;
+    }
+
+    if (size == 0)
+    {
+        return;
+    }
+
     ChunkLocation startLoc = CalculateChunkLocation(start);
     ChunkLocation endLoc = CalculateChunkLocation(start + size);
 
@@ -248,6 +277,11 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
             subSize = endLoc.chunkOffset - subOffset;
         }
 
+        if (subSize == 0)
+        {
+            break;
+        }
+
         std::string objectName = GenerateChunkName(curChunk);
 
         // This will throw if the chunk doesn't exist
@@ -258,7 +292,7 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
 
         if (numBytesRead < subSize)
         {
-            helper::Throw<std::ios_base::failure>(
+            helper::Throw<std::range_error>(
                 "Toolkit", "transport::file::FileFlexNVMe", "Read",
                 "Failed to read '" + m_Name +
                     "' because more bytes were requested than were stored");
@@ -267,13 +301,18 @@ void FileFlexNVMe::Read(char *buffer, size_t size, size_t start)
         curChunk++;
         readPointer += subSize;
     }
+
+    m_Cursor += size;
 }
 
+// TODO: If there is a gap in chunks, the reported size is incorrect
+// TODO: If the chunk 0 is missing but data has been written to a non-zero
+// chunk, a not-found exception is thrown
 size_t FileFlexNVMe::GetSize()
 {
     if (FileFlexNVMe::flanh == nullptr)
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::logic_error>(
             "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
             "GetSize called before Open");
     }
@@ -283,16 +322,17 @@ size_t FileFlexNVMe::GetSize()
     size_t totalSize = 0;
 
     // TODO(adbo): extract to function like GetChunkInfo(chunkName)
-    while ((objectInfo = flan_find_oinfo(FileFlexNVMe::flanh,
-                                         GenerateChunkName(chunkNum++).c_str(),
-                                         nullptr)))
+    while ((objectInfo =
+                flan_find_oinfo(FileFlexNVMe::flanh,
+                                GenerateChunkName(chunkNum).c_str(), nullptr)))
     {
         totalSize += objectInfo->size;
+        chunkNum++;
     }
 
     if (chunkNum == 0)
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "GetSize",
             "Object '" + m_Name + "' not found");
     }
@@ -311,15 +351,26 @@ void FileFlexNVMe::Close()
     }
 
     m_IsOpen = false;
+    m_Cursor = 0;
 }
 
 void FileFlexNVMe::Delete() {}
 
-void FileFlexNVMe::SeekToEnd() {}
+void FileFlexNVMe::SeekToEnd() { m_Cursor = GetSize(); }
 
-void FileFlexNVMe::SeekToBegin() {}
+void FileFlexNVMe::SeekToBegin() { m_Cursor = 0; }
 
-void FileFlexNVMe::Seek(const size_t start) {}
+void FileFlexNVMe::Seek(const size_t start)
+{
+    if (start != MaxSizeT)
+    {
+        m_Cursor = start;
+    }
+    else
+    {
+        SeekToEnd();
+    }
+}
 
 void FileFlexNVMe::Truncate(const size_t length) {}
 
@@ -359,7 +410,7 @@ auto FileFlexNVMe::OpenFlanObject(std::string &objectName, int flags)
     if (flan_object_open(objectName.c_str(), FileFlexNVMe::flanh, &objectHandle,
                          flags))
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileFlexNVMe", "OpenChunk",
             "Failed to open object " + objectName);
     }
@@ -370,7 +421,7 @@ void FileFlexNVMe::CloseFlanObject(uint64_t objectHandle)
 {
     if (flan_object_close(objectHandle, FileFlexNVMe::flanh))
     {
-        helper::Throw<std::ios_base::failure>(
+        helper::Throw<std::runtime_error>(
             "Toolkit", "transport::file::FileFlexNVMe", "CloseChunk",
             "Failed to close chunk object");
     }

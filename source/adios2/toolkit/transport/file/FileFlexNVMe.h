@@ -95,6 +95,8 @@ private:
     static struct flan_handle *flanh;
     static int refCount;
 
+    size_t m_Cursor;
+
     auto ErrnoErrMsg() const -> std::string;
 
     void InitFlan(const std::string &name);
