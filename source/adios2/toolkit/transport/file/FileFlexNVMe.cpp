@@ -16,12 +16,14 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <flexalloc_shared.h>
 #include <ios>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
 #include <flan.h>
+#include <sys/types.h>
 #include <utility>
 
 namespace adios2
@@ -117,15 +119,18 @@ void FileFlexNVMe::InitFlan(const std::string &pool_name)
         return;
     }
 
+    uint32_t strp_nbytes = 65024;
+    uint32_t strp_nobjs = 32;
+    uint32_t obj_size = m_objectSize / strp_nobjs;
+    printf("obj_size 2 = %u\n", obj_size);
+
     struct fla_pool_create_arg pool_arg = {
-        .flags = 0,
+        .flags = FLA_POOL_ENTRY_STRP,
         .name = const_cast<char *>(pool_name.c_str()),
         .name_len = static_cast<int>(pool_name.length() + 1),
         .obj_nlb = 0, // will get set by flan_init
-        .strp_nobjs = 0,
-        .strp_nbytes = 0};
-
-    uint64_t obj_size = m_objectSize;
+        .strp_nobjs = strp_nobjs,
+        .strp_nbytes = strp_nbytes};
 
     if (flan_init(const_cast<char *>(m_deviceUrl.c_str()), nullptr, &pool_arg,
                   obj_size, &FileFlexNVMe::flanh))
